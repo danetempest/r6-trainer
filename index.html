@@ -14,6 +14,13 @@
         .header { padding: 20px; border-bottom: 1px solid #333; background: #111; }
         h1 { margin: 0; font-size: 1.1rem; color: var(--accent); letter-spacing: 1px; }
 
+        /* NAVIGATION MENU */
+        .nav-box { padding: 15px; border-bottom: 1px solid #333; background: #141417; }
+        .nav-label { font-size: 0.7rem; color: #666; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
+        .nav-btn { display: block; text-decoration: none; background: #222; color: #ccc; padding: 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #333; font-size: 0.85rem; font-weight: bold; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .nav-btn:hover { background: #333; color: #fff; border-color: #555; }
+        .nav-btn.active { background: rgba(0, 212, 255, 0.1); color: var(--accent); border-color: var(--accent); }
+
         /* MAP SELECTOR UI */
         .map-selector { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
         select { background: #222; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
@@ -24,8 +31,7 @@
         .tool-card { background: #27272a; padding: 12px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
         .tool-card:hover { background: #333; border-color: #555; }
         .tool-card.active { border-color: var(--accent); background: rgba(0, 212, 255, 0.1); }
-        .count { font-size: 0.75rem; background: #111; padding: 2px 6px; border-radius: 4px; color: #888; }
-
+        
         /* ACTIONS */
         .controls { padding: 15px; background: #111; border-top: 1px solid #333; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; text-transform: uppercase; font-size: 0.8rem; transition: 0.2s; }
@@ -69,6 +75,16 @@
             </div>
         </div>
 
+        <div class="nav-box">
+            <div class="nav-label">TRAINING MODULES</div>
+            <a href="index.html" class="nav-btn active">
+                <span>🗺️</span> Map Tactician
+            </a>
+            <a href="shaiiko-peaking.html" class="nav-btn">
+                <span>🎯</span> Shaiiko Peaking Lab
+            </a>
+        </div>
+
         <div class="inventory" id="invList"></div>
 
         <div class="controls">
@@ -100,10 +116,9 @@
         let items = [];
         let activeTool = null;
         
-        // Populate Map Dropdowns from maps.js
         function initMaps() {
             if(typeof MAP_DATABASE === 'undefined') {
-                alert("Error: maps.js not found! Make sure it is in the same folder.");
+                console.error("Error: maps.js not found!");
                 return;
             }
             const groupSel = document.getElementById('mapGroup');
@@ -124,7 +139,7 @@
             const floors = MAP_DATABASE[groupName];
             for(let floorName in floors) {
                 let opt = document.createElement('option');
-                opt.value = floors[floorName]; // The URL
+                opt.value = floors[floorName];
                 opt.innerText = floorName;
                 floorSel.appendChild(opt);
             }
@@ -138,7 +153,6 @@
             clearBoard();
         }
 
-        // Populate Tools
         function renderInv() {
             const list = document.getElementById('invList');
             list.innerHTML = '';
@@ -156,13 +170,10 @@
         const mapImg = document.getElementById('mapImg');
 
         stage.addEventListener('mousedown', e => {
-            // Place Item
             if(activeTool && (e.target.id === 'stage' || e.target.tagName === 'IMG')) {
-                // Get coords relative to image if possible
                 const ref = mapImg.style.display === 'none' ? stage : mapImg;
                 const r = ref.getBoundingClientRect();
                 
-                // Bounds check
                 if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
 
                 const x = ((e.clientX - r.left) / r.width) * 100;
@@ -185,15 +196,10 @@
             el.id = `g-${item.id}`;
             el.style.left = item.x + '%';
             el.style.top = item.y + '%';
-            
-            // Auto-rotate walls if horizontal placement
             if(item.type === 'wall' && item.rot === 0 && item.y < 50) item.rot = 90;
-            
             el.style.transform = `translate(-50%, -50%) rotate(${item.rot}deg)`;
 
-            // Right Click Delete
             el.oncontextmenu = e => { e.preventDefault(); deleteItem(item.id); };
-            // Click Rotate
             el.onclick = e => { 
                 e.stopPropagation(); 
                 item.rot += 45; 
@@ -213,7 +219,7 @@
             document.querySelectorAll('.gadget').forEach(e => e.remove());
         }
 
-        // --- 4. SAVE/LOAD SYSTEM ---
+        // --- 4. IO ---
         function exportStrat() {
             document.getElementById('ioBox').style.display = 'block';
             document.getElementById('dataStr').value = JSON.stringify(items);
@@ -232,7 +238,6 @@
             } catch(e) { alert("Invalid Code"); }
         }
 
-        // Startup
         initMaps();
         renderInv();
     </script>
