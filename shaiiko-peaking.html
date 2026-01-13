@@ -6,8 +6,12 @@
     <style>
         :root { --p-blue: #00d4ff; --p-gold: #ffcc00; --p-red: #ff4b4b; --bg: #09090b; --card: #18181b; }
         body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .lab-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid #27272a; width: 850px; box-shadow: 0 50px 100px rgba(0,0,0,0.9); position: relative; }
+        .lab-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid #27272a; width: 850px; box-shadow: 0 50px 100px rgba(0,0,0,0.9); position: relative; margin-top: 40px; }
         
+        /* BACK BUTTON */
+        .back-link { position: absolute; top: 20px; left: 20px; color: #666; text-decoration: none; font-weight: bold; font-family: sans-serif; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .back-link:hover { color: var(--p-blue); }
+
         /* RANK DISPLAY */
         .rank-badge { position: absolute; top: 25px; right: 40px; font-size: 6rem; font-weight: 900; line-height: 1; color: #27272a; transition: 0.2s; }
         .rank-S { color: var(--p-gold); text-shadow: 0 0 40px var(--p-gold); }
@@ -44,6 +48,11 @@
     </style>
 </head>
 <body>
+
+    <a href="index.html" class="back-link">
+        ⬅ BACK TO MAP TRAINER
+    </a>
+
     <div class="lab-card">
         <div id="rank-display" class="rank-badge">D</div>
         <h1 style="margin:0; font-size: 1.8rem;">PRO RHYTHM LAB <span style="color:var(--p-blue)">9.0</span></h1>
@@ -104,7 +113,6 @@
             gain.connect(audioCtx.destination);
 
             if (type === 'success') {
-                // High Pitched "Headshot" Ding
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(800, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
@@ -112,14 +120,12 @@
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
             } else if (type === 'click') {
-                // Mechanical Click
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(300, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.05);
             } else if (type === 'fail') {
-                // Dull Thud
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(150, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
