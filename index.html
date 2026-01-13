@@ -1,1 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>R6 Tactician Pro</title>
+    <script src="maps.js"></script>
+    <style>
+        :root { --bg: #09090b; --panel: #18181b; --accent: #00d4ff; --gold: #ffcc00; --danger: #ff4b4b; --success: #00ff88; }
+        body { margin: 0; background: var(--bg); color: #e0e0e0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; user-select: none; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 340px; background: var(--panel); border-right: 1px solid #333; display: flex; flex-direction: column; z-index: 200; box-shadow: 5px 0 30px rgba(0,0,0,0.5); }
+        
+        .header { padding: 20px; border-bottom: 1px solid #333; background: #111; }
+        h1 { margin: 0; font-size: 1.1rem; color: var(--accent); letter-spacing: 1px; }
 
+        /* MAP SELECTOR UI */
+        .map-selector { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
+        select { background: #222; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        select:hover { border-color: var(--accent); }
+
+        /* TOOLKIT */
+        .inventory { flex-grow: 1; padding: 15px; overflow-y: auto; }
+        .tool-card { background: #27272a; padding: 12px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
+        .tool-card:hover { background: #333; border-color: #555; }
+        .tool-card.active { border-color: var(--accent); background: rgba(0, 212, 255, 0.1); }
+        .count { font-size: 0.75rem; background: #111; padding: 2px 6px; border-radius: 4px; color: #888; }
+
+        /* ACTIONS */
+        .controls { padding: 15px; background: #111; border-top: 1px solid #333; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; text-transform: uppercase; font-size: 0.8rem; transition: 0.2s; }
+        .btn:hover { filter: brightness(1.2); }
+        .btn-save { background: var(--gold); color: #000; }
+        .btn-load { background: var(--accent); color: #000; }
+        .btn-clear { background: #333; color: #fff; }
+
+        /* STAGE */
+        .stage { flex-grow: 1; position: relative; background: #050505; overflow: hidden; cursor: crosshair; display: flex; align-items: center; justify-content: center; }
+        .map-layer { max-width: 95%; max-height: 95%; pointer-events: none; opacity: 0.9; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        
+        /* GADGETS */
+        .gadget { position: absolute; transform: translate(-50%, -50%); z-index: 100; cursor: grab; filter: drop-shadow(0 4px 6px #000); }
+        .gadget:active { cursor: grabbing; }
+        .gadget:hover { filter: drop-shadow(0 0 5px var(--accent)); transform: translate(-50%, -50%) scale(1.05); }
+        
+        /* VISUALS */
+        .g-wall { width: 80px; height: 8px; background: #666; border: 1px solid #aaa; border-radius: 2px; }
+        .g-rotate { width: 50px; height: 50px; border: 3px dashed var(--accent); border-radius: 50%; background: rgba(0,212,255,0.2); }
+        .g-shield { width: 50px; height: 12px; background: rgba(255,204,0,0.3); border: 2px solid #ffcc00; border-radius: 6px; }
+
+        /* DATA OUTPUT */
+        .io-area { margin-top: 10px; display: none; }
+        textarea { width: 100%; height: 60px; background: #000; border: 1px solid #333; color: var(--success); font-family: monospace; font-size: 0.7rem; padding: 5px; resize: none; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="header">
+            <h1>R6 TACTICIAN</h1>
+            
+            <div class="map-selector">
+                <select id="mapGroup" onchange="updateFloors()">
+                    <option value="" disabled selected>Select Map...</option>
+                </select>
+                <select id="mapFloor" onchange="loadSelectedMap()" disabled>
+                    <option value="" disabled selected>Select Floor...</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="inventory" id="invList"></div>
+
+        <div class="controls">
+            <button class="btn btn-save" onclick="exportStrat()">💾 SAVE STRAT CODE</button>
+            <button class="btn btn-load" onclick="importStrat()">📂 LOAD STRAT CODE</button>
+            <button class="btn btn-clear" onclick="clearBoard()">CLEAR BOARD</button>
+            
+            <div class="io-area" id="ioBox">
+                <div style="font-size:0.7rem; color:#666; margin-bottom:4px;">STRAT DATA STRING</div>
+                <textarea id="dataStr" placeholder="Paste strat code here..." onclick="this.select()"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="stage" id="stage">
+        <img id="mapImg" class="map-layer" style="display:none">
+        <div id="welcome" style="color:#333; font-weight:bold; font-size:1.5rem;">SELECT A MAP</div>
+    </div>
+
+    <script>
+        // --- 1. CONFIG ---
+        const TOOLS = {
+            'wall': { name: 'Reinforce', w: 80, h: 8 },
+            'rotate': { name: 'Rotate', w: 50, h: 50 },
+            'shield': { name: 'Shield', w: 50, h: 10 }
+        };
+
+        // --- 2. INIT ---
+        let items = [];
+        let activeTool = null;
+        
+        // Populate Map Dropdowns from maps.js
+        function initMaps() {
+            if(typeof MAP_DATABASE === 'undefined') {
+                alert("Error: maps.js not found! Make sure it is in the same folder.");
+                return;
+            }
+            const groupSel = document.getElementById('mapGroup');
+            for(let mapName in MAP_DATABASE) {
+                let opt = document.createElement('option');
+                opt.value = mapName;
+                opt.innerText = mapName;
+                groupSel.appendChild(opt);
+            }
+        }
+
+        function updateFloors() {
+            const groupName = document.getElementById('mapGroup').value;
+            const floorSel = document.getElementById('mapFloor');
+            floorSel.innerHTML = '<option value="" disabled selected>Select Floor...</option>';
+            floorSel.disabled = false;
+
+            const floors = MAP_DATABASE[groupName];
+            for(let floorName in floors) {
+                let opt = document.createElement('option');
+                opt.value = floors[floorName]; // The URL
+                opt.innerText = floorName;
+                floorSel.appendChild(opt);
+            }
+        }
+
+        function loadSelectedMap() {
+            const url = document.getElementById('mapFloor').value;
+            document.getElementById('mapImg').src = url;
+            document.getElementById('mapImg').style.display = 'block';
+            document.getElementById('welcome').style.display = 'none';
+            clearBoard();
+        }
+
+        // Populate Tools
+        function renderInv() {
+            const list = document.getElementById('invList');
+            list.innerHTML = '';
+            for(let k in TOOLS) {
+                let div = document.createElement('div');
+                div.className = `tool-card ${activeTool === k ? 'active' : ''}`;
+                div.onclick = () => { activeTool = (activeTool === k ? null : k); renderInv(); };
+                div.innerHTML = `<span style="font-weight:bold">${TOOLS[k].name}</span>`;
+                list.appendChild(div);
+            }
+        }
+
+        // --- 3. INTERACTION ---
+        const stage = document.getElementById('stage');
+        const mapImg = document.getElementById('mapImg');
+
+        stage.addEventListener('mousedown', e => {
+            // Place Item
+            if(activeTool && (e.target.id === 'stage' || e.target.tagName === 'IMG')) {
+                // Get coords relative to image if possible
+                const ref = mapImg.style.display === 'none' ? stage : mapImg;
+                const r = ref.getBoundingClientRect();
+                
+                // Bounds check
+                if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+
+                const x = ((e.clientX - r.left) / r.width) * 100;
+                const y = ((e.clientY - r.top) / r.height) * 100;
+                
+                createItem(x, y, activeTool);
+            }
+        });
+
+        function createItem(x, y, type) {
+            const id = Date.now();
+            const item = { id, x, y, type, rot: 0 };
+            items.push(item);
+            renderItem(item);
+        }
+
+        function renderItem(item) {
+            const el = document.createElement('div');
+            el.className = `gadget g-${item.type}`;
+            el.id = `g-${item.id}`;
+            el.style.left = item.x + '%';
+            el.style.top = item.y + '%';
+            
+            // Auto-rotate walls if horizontal placement
+            if(item.type === 'wall' && item.rot === 0 && item.y < 50) item.rot = 90;
+            
+            el.style.transform = `translate(-50%, -50%) rotate(${item.rot}deg)`;
+
+            // Right Click Delete
+            el.oncontextmenu = e => { e.preventDefault(); deleteItem(item.id); };
+            // Click Rotate
+            el.onclick = e => { 
+                e.stopPropagation(); 
+                item.rot += 45; 
+                el.style.transform = `translate(-50%, -50%) rotate(${item.rot}deg)`; 
+            };
+
+            stage.appendChild(el);
+        }
+
+        function deleteItem(id) {
+            items = items.filter(i => i.id !== id);
+            document.getElementById(`g-${id}`).remove();
+        }
+
+        function clearBoard() {
+            items = [];
+            document.querySelectorAll('.gadget').forEach(e => e.remove());
+        }
+
+        // --- 4. SAVE/LOAD SYSTEM ---
+        function exportStrat() {
+            document.getElementById('ioBox').style.display = 'block';
+            document.getElementById('dataStr').value = JSON.stringify(items);
+        }
+
+        function importStrat() {
+            document.getElementById('ioBox').style.display = 'block';
+            const str = document.getElementById('dataStr').value;
+            if(!str) return;
+            try {
+                const data = JSON.parse(str);
+                clearBoard();
+                items = data;
+                items.forEach(renderItem);
+                alert("Strat Loaded!");
+            } catch(e) { alert("Invalid Code"); }
+        }
+
+        // Startup
+        initMaps();
+        renderInv();
+    </script>
+</body>
+</html>
