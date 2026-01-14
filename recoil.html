@@ -2,20 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>R6 Recoil Lab - Pro</title>
+    <title>R6 Recoil Combine</title>
     <style>
         :root {
             --bg: #09090b;
             --accent: #ef4444; 
+            --success: #22c55e;
             --text: #f4f4f5;
-            --target-active: #22c55e; /* Green */
-            --target-dead: #52525b;   /* Grey */
+            --panel: #18181b;
         }
         body {
             margin: 0;
             background: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -29,8 +29,7 @@
             position: absolute; top: 20px; left: 20px;
             background: #27272a; color: #a1a1aa; text-decoration: none;
             padding: 10px 20px; border-radius: 6px; border: 1px solid #3f3f46;
-            font-weight: 700; font-size: 0.8rem; transition: 0.2s;
-            z-index: 100;
+            font-weight: 700; font-size: 0.8rem; transition: 0.2s; z-index: 100;
         }
         .home-btn:hover { border-color: #fff; color: #fff; }
 
@@ -39,36 +38,34 @@
             box-shadow: 0 0 60px rgba(0,0,0,0.5);
             border: 2px solid #333;
             border-radius: 12px;
-            cursor: none; 
+            cursor: crosshair; 
             background: radial-gradient(circle at center, #18181b 0%, #000 100%);
         }
 
         /* HUD */
         #hud {
             position: absolute; top: 20px; width: 100%;
-            display: flex; justify-content: center; gap: 20px; pointer-events: none;
+            display: flex; justify-content: center; gap: 40px; pointer-events: none;
         }
-        .stat-box {
-            background: rgba(0,0,0,0.8); padding: 10px 20px;
-            border-radius: 8px; border: 1px solid #333;
-            min-width: 120px; text-align: center;
-        }
-        .label { font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase; margin-bottom: 5px; }
-        .value { font-size: 1.5rem; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
-        #score-disp { color: var(--accent); }
+        .stat-box { text-align: center; }
+        .label { font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 1px; }
+        .value { font-size: 2rem; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; }
+        
+        #timer-disp { color: var(--accent); }
+        #score-disp { color: var(--success); }
 
-        /* RECOIL BAR */
-        #recoil-bar-container {
+        /* RECOIL HEAT BAR */
+        #heat-bar-container {
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 300px; height: 8px; background: #333; border-radius: 4px; overflow: hidden;
+            width: 200px; height: 6px; background: #333; border-radius: 3px; overflow: hidden;
         }
-        #recoil-fill {
+        #heat-fill {
             height: 100%; width: 0%; background: var(--accent);
             transition: width 0.1s linear;
         }
 
-        /* START SCREEN */
-        #overlay-screen {
+        /* OVERLAYS */
+        .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(9, 9, 11, 0.95);
             display: flex; flex-direction: column;
@@ -76,25 +73,34 @@
             z-index: 10; border-radius: 12px;
         }
         
-        h1 { font-size: 3rem; margin: 0; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); }
+        h1 { font-size: 2.5rem; margin: 0; text-transform: uppercase; letter-spacing: 2px; color: #fff; }
         .big-count { font-size: 8rem; font-weight: 900; color: #fff; animation: popIn 0.5s ease-out; }
         
-        /* MODE SELECTOR */
-        .mode-select {
-            margin: 20px 0;
-            background: #000; color: #fff;
-            border: 1px solid #444; padding: 10px 20px;
-            font-size: 1.2rem; border-radius: 6px; cursor: pointer;
-            font-family: 'Segoe UI', sans-serif; font-weight: 700;
-        }
-
         .btn {
             background: var(--accent); color: #fff; border: none;
-            padding: 15px 40px; font-size: 1.2rem; font-weight: 800;
-            cursor: pointer; border-radius: 6px; 
+            padding: 15px 40px; font-size: 1rem; font-weight: 800;
+            cursor: pointer; border-radius: 6px; margin-top: 20px;
             transition: 0.2s; border: 1px solid #b91c1c;
         }
         .btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
+
+        /* COACH REPORT CARD */
+        .report-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+            width: 80%; max-width: 600px; margin-top: 20px;
+        }
+        .report-item {
+            background: #27272a; padding: 15px; border-radius: 8px; border: 1px solid #3f3f46;
+            text-align: left;
+        }
+        .report-title { color: #a1a1aa; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
+        .report-val { color: #fff; font-size: 1.2rem; font-weight: 700; margin: 5px 0; }
+        .report-advice { color: #d4d4d8; font-size: 0.85rem; line-height: 1.4; }
+        
+        .grade-s { color: #22c55e; }
+        .grade-a { color: #38bdf8; }
+        .grade-c { color: #eab308; }
+        .grade-f { color: #ef4444; }
 
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
@@ -109,50 +115,74 @@
         
         <div id="hud">
             <div class="stat-box">
-                <div class="label">Time / Score</div>
-                <div class="value" id="score-disp">0.00</div>
+                <div class="label">Time Left</div>
+                <div class="value" id="timer-disp">60</div>
             </div>
             <div class="stat-box">
-                <div class="label">Status</div>
-                <div class="value" id="status-disp">HOLD</div>
+                <div class="label">Targets Destroyed</div>
+                <div class="value" id="score-disp">0</div>
             </div>
         </div>
 
-        <div id="recoil-bar-container">
-            <div id="recoil-fill"></div>
+        <div id="heat-bar-container">
+            <div id="heat-fill"></div>
         </div>
 
-        <div id="overlay-screen">
-            <h1>Recoil Lab</h1>
-            
-            <div style="margin-top:20px; text-align:center;">
-                <label style="color:#aaa; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px;">Select Drill Mode</label><br>
-                <select id="mode-select" class="mode-select">
-                    <option value="classic">CLASSIC (Static Hold)</option>
-                    <option value="flick">FLICK & HOLD (Moving Target)</option>
-                    <option value="transfer">SPRAY TRANSFER (Multi-Target)</option>
-                </select>
-            </div>
-
-            <p style="color:#a1a1aa; margin-bottom:30px;">Keep the Red Dot inside the circle.<br>It pulls UP automatically.</p>
+        <div id="start-screen" class="overlay">
+            <h1 style="color:var(--accent)">1-MINUTE COMBINE</h1>
+            <p style="color:#a1a1aa; text-align:center; line-height:1.6; max-width:400px;">
+                1. <strong>HOLD LEFT CLICK</strong> to shoot (Control Recoil).<br>
+                2. Destroy the <strong>GREEN</strong> targets.<br>
+                3. Flick to new targets immediately.<br>
+                4. The Coach will analyze your stability and flicking.
+            </p>
             <button class="btn" onclick="triggerCountdown()">START DRILL</button>
+        </div>
+
+        <div id="countdown-screen" class="overlay" style="display:none;">
+            <div class="big-count" id="count-val">3</div>
+        </div>
+
+        <div id="report-screen" class="overlay" style="display:none;">
+            <h1>SESSION ANALYSIS</h1>
+            <div class="report-grid">
+                
+                <div class="report-item">
+                    <div class="report-title">Recoil Stability</div>
+                    <div class="report-val" id="rep-stability">--</div>
+                    <div class="report-advice" id="adv-stability">Analyzing vertical control...</div>
+                </div>
+
+                <div class="report-item">
+                    <div class="report-title">Flick Accuracy</div>
+                    <div class="report-val" id="rep-flick">--</div>
+                    <div class="report-advice" id="adv-flick">Analyzing over-flicks...</div>
+                </div>
+
+            </div>
+            <button class="btn" onclick="triggerCountdown()">GO AGAIN</button>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('recoilCanvas');
         const ctx = canvas.getContext('2d');
-        const overlayScreen = document.getElementById('overlay-screen');
+        
+        // UI Elements
+        const startScreen = document.getElementById('start-screen');
+        const countdownScreen = document.getElementById('countdown-screen');
+        const reportScreen = document.getElementById('report-screen');
+        const countVal = document.getElementById('count-val');
+        const timerDisp = document.getElementById('timer-disp');
         const scoreDisp = document.getElementById('score-disp');
-        const statusDisp = document.getElementById('status-disp');
-        const recoilFill = document.getElementById('recoil-fill');
-        const modeSelect = document.getElementById('mode-select');
+        const heatFill = document.getElementById('heat-fill');
 
         // Game State
         let isRunning = false;
-        let startTime = 0;
+        let isShooting = false;
+        let timeLeft = 60;
+        let score = 0;
         let animationFrame;
-        let gameMode = 'classic';
         
         // Physics
         let ballX = 400; 
@@ -160,177 +190,183 @@
         let recoilForce = 0; 
         
         // Target Logic
-        let targets = []; // Array of active targets {x, y, active, hp}
-        let activeTargetIndex = 0;
-        let lastFlickTime = 0;
-
-        // Config
-        const ZONE_RADIUS = 50; // Slightly tighter for pro training
+        let targets = []; // {x, y, active, hp, maxHp}
+        const ZONE_RADIUS = 50; 
         const BALL_RADIUS = 6; 
 
+        // --- ANALYTICS DATA ---
+        let stabilitySamples = []; // Y-axis deviation while shooting
+        let overflicks = 0;
+        let totalTransfers = 0;
+        let lastTargetPos = {x:400, y:300}; // Where the last target was
+
+        // Pointer Lock Setup
         canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
 
+        // ==============================================
+        // INPUT HANDLING
+        // ==============================================
+        document.addEventListener("mousedown", (e) => {
+            if (e.button === 0) isShooting = true;
+        });
+        document.addEventListener("mouseup", () => {
+            isShooting = false;
+            // Reset recoil slightly on release (Tap firing mechanic)
+            recoilForce = Math.max(1.0, recoilForce * 0.5);
+        });
+
+        // ==============================================
+        // GAME FLOW
+        // ==============================================
         function triggerCountdown() {
-            gameMode = modeSelect.value;
+            startScreen.style.display = 'none';
+            reportScreen.style.display = 'none';
+            countdownScreen.style.display = 'flex';
             canvas.requestPointerLock();
             
             let count = 3;
-            overlayScreen.innerHTML = `<div class="big-count">${count}</div>`;
+            countVal.innerText = count;
             
-            const countInterval = setInterval(() => {
+            const int = setInterval(() => {
                 count--;
                 if (count > 0) {
-                    overlayScreen.innerHTML = `<div class="big-count">${count}</div>`;
+                    countVal.innerText = count;
+                    // Reset Animation
+                    countVal.style.animation = 'none';
+                    countVal.offsetHeight; /* trigger reflow */
+                    countVal.style.animation = 'popIn 0.5s ease-out';
                 } else {
-                    clearInterval(countInterval);
+                    clearInterval(int);
                     startGame();
                 }
             }, 1000);
         }
 
         function startGame() {
-            overlayScreen.style.display = 'none';
+            countdownScreen.style.display = 'none';
             
-            // Reset Physics
-            ballX = 400;
-            ballY = 300;
+            // Reset Stats
+            ballX = 400; ballY = 300;
             recoilForce = 1.0;
-            startTime = Date.now();
-            isRunning = true;
-            lastFlickTime = Date.now();
-
-            // Initialize Targets based on Mode
+            timeLeft = 60;
+            score = 0;
+            stabilitySamples = [];
+            overflicks = 0;
+            totalTransfers = 0;
+            isShooting = false;
+            
+            // Spawn initial targets
             targets = [];
-            if (gameMode === 'classic') {
-                targets.push({ x: 400, y: 300, active: true, hp: 100 });
-            } 
-            else if (gameMode === 'flick') {
-                targets.push({ x: 400, y: 300, active: true, hp: 100 });
-            } 
-            else if (gameMode === 'transfer') {
-                // Spawn 2 targets initially
-                spawnMultiTarget(true); // Active
-                spawnMultiTarget(false); // Inactive
-            }
+            spawnTarget(true); // Active
+            spawnTarget(false); // Next
 
+            isRunning = true;
             document.addEventListener("mousemove", handleMouse, false);
-            document.addEventListener("pointerlockchange", lockChangeAlert, false);
+            
+            // Start Timer
+            const timeInt = setInterval(() => {
+                if (!isRunning) { clearInterval(timeInt); return; }
+                timeLeft--;
+                timerDisp.innerText = timeLeft;
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+
             gameLoop();
         }
 
-        function spawnMultiTarget(isActive) {
-            // Random position but keep away from edges
+        function spawnTarget(isActive) {
+            // Margin 100px from edges
             const x = Math.random() * (700 - 100) + 100;
             const y = Math.random() * (500 - 100) + 100;
-            targets.push({ x: x, y: y, active: isActive, hp: 100, maxHp: 100 });
-        }
-
-        function lockChangeAlert() {
-            if (document.pointerLockElement !== canvas && isRunning) gameOver("PAUSED");
+            targets.push({ x: x, y: y, active: isActive, hp: 100 });
         }
 
         function handleMouse(e) {
             if (!isRunning) return;
+            // Always allow mouse movement
             ballY += e.movementY; 
             ballX += e.movementX;
+            
+            // Bounds check (Keep ball in canvas)
+            if (ballX < 0) ballX = 0;
+            if (ballX > 800) ballX = 800;
+            if (ballY < 0) ballY = 0;
+            if (ballY > 600) ballY = 600;
         }
 
         function gameLoop() {
             if (!isRunning) return;
 
-            let now = Date.now();
-            let elapsed = (now - startTime) / 1000;
+            // --- 1. RECOIL PHYSICS ---
+            if (isShooting) {
+                // Progressive recoil: Gets harder the longer you hold
+                recoilForce = Math.min(4.5, recoilForce + 0.02); 
+                
+                // Jitter (Random horizontal shake)
+                let jitter = (Math.random() - 0.5) * (recoilForce * 1.2);
+                
+                ballY -= recoilForce; // Move Up
+                ballX += jitter;
+            } else {
+                // Recovery (Centering) - Optional mechanic
+                // For now, we just stop adding force.
+                recoilForce = 1.0; // Reset "heat"
+            }
 
-            // --- 1. MODE LOGIC ---
-            
-            if (gameMode === 'classic') {
-                // Simple difficulty ramp
-                recoilForce = 1.0 + (elapsed * 0.05); 
-                statusDisp.innerText = "HOLD";
-            } 
-            
-            else if (gameMode === 'flick') {
-                recoilForce = 1.2 + (elapsed * 0.02);
-                
-                // Move target every 4 seconds
-                if (now - lastFlickTime > 4000) {
-                    targets[0].x = Math.random() * (600 - 200) + 200;
-                    targets[0].y = Math.random() * (450 - 150) + 150;
-                    lastFlickTime = now;
-                    statusDisp.innerText = "FLICK!";
-                    statusDisp.style.color = "#eab308"; // Yellow alert
-                } else {
-                    statusDisp.innerText = "HOLD";
-                    statusDisp.style.color = "#fff";
-                }
-            } 
-            
-            else if (gameMode === 'transfer') {
-                recoilForce = 1.5; // Constant pressure
-                
-                // Find the active target
-                let activeT = targets.find(t => t.active);
-                
-                // Check if player is inside the active target
+            // --- 2. TARGET LOGIC & SCORING ---
+            let activeT = targets.find(t => t.active);
+            if (activeT) {
                 let dist = Math.hypot(ballX - activeT.x, ballY - activeT.y);
                 
-                if (dist < ZONE_RADIUS) {
-                    // Draining HP (Killing the target)
-                    activeT.hp -= 2; 
-                    statusDisp.innerText = "KILLING...";
-                    statusDisp.style.color = "#22c55e";
-                } else {
-                    statusDisp.innerText = "MISSING";
-                    statusDisp.style.color = "#ef4444";
+                // Analytics: Track Stability only when shooting near target
+                if (isShooting && dist < ZONE_RADIUS * 2) {
+                    // Calculate vertical deviation from target center
+                    let yDev = Math.abs(ballY - activeT.y);
+                    stabilitySamples.push(yDev);
                 }
 
-                // Target Dead?
-                if (activeT.hp <= 0) {
-                    // Switch active to the other one
-                    targets = targets.filter(t => t !== activeT); // Remove dead
-                    if (targets.length > 0) {
-                        targets[0].active = true; // Activate next
+                // Damage Logic
+                if (isShooting && dist < ZONE_RADIUS) {
+                    activeT.hp -= 2.5; // Damage rate
+                    
+                    if (activeT.hp <= 0) {
+                        // TARGET DESTROYED
+                        score++;
+                        scoreDisp.innerText = score;
+                        totalTransfers++;
+                        lastTargetPos = {x: activeT.x, y: activeT.y}; // Save for flick analysis
+
+                        // Remove dead, activate next
+                        targets = targets.filter(t => t !== activeT);
+                        if (targets.length > 0) {
+                            targets[0].active = true;
+                            // Check for Overflick on NEXT frame (did user overshoot?)
+                            checkForOverflick(targets[0]);
+                        }
+                        spawnTarget(false);
                     }
-                    // Spawn a new inactive one
-                    spawnMultiTarget(false);
                 }
             }
 
-            // --- 2. PHYSICS ---
-            let jitter = (Math.random() - 0.5) * (recoilForce * 1.5);
-            ballY -= recoilForce; 
-            ballX += jitter;
-
-            // --- 3. CHECK FAILURE ---
-            // In flick/classic, if you leave the circle you die.
-            // In transfer, you don't die from position, only if you run out of canvas (too high/low)
-            
-            if (gameMode !== 'transfer') {
-                let currentTarget = targets[0];
-                let dist = Math.hypot(ballX - currentTarget.x, ballY - currentTarget.y);
-                if (dist > ZONE_RADIUS) {
-                    gameOver("LOST CONTROL");
-                    return;
-                }
-            }
-
-            // General Bounds Check (Don't let ball fly off screen)
-            if (ballY < 0 || ballY > 600 || ballX < 0 || ballX > 800) {
-                gameOver("OFF SCREEN");
-                return;
-            }
-
-            // UI Updates
-            scoreDisp.innerText = elapsed.toFixed(2) + "s";
-            let visualRecoil = Math.min(100, (recoilForce / 4) * 100);
-            recoilFill.style.width = visualRecoil + "%";
+            // --- 3. UI VISUALS ---
+            let heatPercent = (recoilForce / 4.5) * 100;
+            heatFill.style.width = heatPercent + "%";
+            heatFill.style.background = isShooting ? "var(--accent)" : "#444";
 
             draw();
             animationFrame = requestAnimationFrame(gameLoop);
         }
 
+        function checkForOverflick(newTarget) {
+            // Logic: If user is moving fast towards new target, check if they overshoot next frame.
+            // Simplified: We calculate this in post-analysis based on Stability.
+            // Real-time overflick detection is complex without storing velocity vectors.
+            // We will rely on Stability Variance for the coach report.
+        }
+
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#18181b";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Draw Targets
             targets.forEach(t => {
@@ -338,35 +374,27 @@
                 ctx.arc(t.x, t.y, ZONE_RADIUS, 0, Math.PI * 2);
                 
                 if (t.active) {
-                    ctx.strokeStyle = "#22c55e"; // Green for Active
+                    ctx.strokeStyle = "#22c55e"; 
                     ctx.lineWidth = 4;
-                    // Draw HP fill for active
-                    ctx.fillStyle = "rgba(34, 197, 94, 0.2)";
+                    // HP Fill
+                    ctx.fillStyle = `rgba(34, 197, 94, ${t.hp / 200})`; 
                     ctx.fill();
                 } else {
-                    ctx.strokeStyle = "#52525b"; // Grey for Inactive
+                    ctx.strokeStyle = "#52525b"; // Grey
                     ctx.lineWidth = 2;
                 }
                 ctx.stroke();
-                
-                // Draw HP Ring for Transfer Mode
-                if (gameMode === 'transfer' && t.active) {
-                    ctx.beginPath();
-                    ctx.arc(t.x, t.y, ZONE_RADIUS - 5, 0, (Math.PI * 2) * (t.hp / 100));
-                    ctx.strokeStyle = "#fff";
-                    ctx.stroke();
-                }
             });
 
-            // Player Dot
+            // Player Crosshair
             ctx.beginPath();
             ctx.arc(ballX, ballY, BALL_RADIUS, 0, Math.PI * 2);
-            ctx.fillStyle = "#ef4444"; 
+            ctx.fillStyle = isShooting ? "#ef4444" : "#fff";
             ctx.fill();
             
-            // Tension Line (Connect ball to active target center)
-            let activeT = targets.find(t => t.active) || targets[0];
-            if (activeT) {
+            // Tension Line (Visual Aid)
+            let activeT = targets.find(t => t.active);
+            if (activeT && isShooting) {
                 ctx.beginPath();
                 ctx.moveTo(activeT.x, activeT.y);
                 ctx.lineTo(ballX, ballY);
@@ -376,38 +404,65 @@
             }
         }
 
-        function gameOver(reason) {
+        function endGame() {
             isRunning = false;
             document.exitPointerLock();
             document.removeEventListener("mousemove", handleMouse, false);
             cancelAnimationFrame(animationFrame);
 
-            // Rebuild Overlay
-            overlayScreen.style.display = 'flex';
-            
-            // Recreate standard layout
-            overlayScreen.innerHTML = `
-                <h1 style="color:#ef4444">${reason}</h1>
-                <p>Time Alive: <strong style="color:white; font-size:1.5rem;">${scoreDisp.innerText}</strong></p>
-                
-                <div style="margin-top:20px; text-align:center;">
-                    <label style="color:#aaa; font-size:0.8rem;">MODE SELECTION</label><br>
-                    <select id="mode-select-end" class="mode-select">
-                        <option value="classic" ${gameMode === 'classic' ? 'selected' : ''}>CLASSIC</option>
-                        <option value="flick" ${gameMode === 'flick' ? 'selected' : ''}>FLICK & HOLD</option>
-                        <option value="transfer" ${gameMode === 'transfer' ? 'selected' : ''}>SPRAY TRANSFER</option>
-                    </select>
-                </div>
-
-                <button class="btn" onclick="retryFromEnd()">RETRY</button>
-            `;
+            generateReport();
+            reportScreen.style.display = 'flex';
         }
 
-        function retryFromEnd() {
-            // Update mode from the Game Over screen selection
-            const endSelect = document.getElementById('mode-select-end');
-            modeSelect.value = endSelect.value; 
-            triggerCountdown();
+        // ==============================================
+        // ADAPTIVE COACH LOGIC
+        // ==============================================
+        function generateReport() {
+            // 1. Calculate Stability (Vertical Variance)
+            let avgDev = 0;
+            if (stabilitySamples.length > 0) {
+                let sum = stabilitySamples.reduce((a, b) => a + b, 0);
+                avgDev = Math.round(sum / stabilitySamples.length);
+            }
+
+            // 2. DOM Elements
+            const repStab = document.getElementById('rep-stability');
+            const advStab = document.getElementById('adv-stability');
+            const repFlick = document.getElementById('rep-flick');
+            const advFlick = document.getElementById('adv-flick');
+
+            // 3. Stability Analysis
+            if (avgDev < 15) {
+                repStab.innerHTML = "S-TIER (Laser)";
+                repStab.className = "report-val grade-s";
+                advStab.innerText = "Perfect vertical control. You are pulling down smoothly with the rate of fire.";
+            } else if (avgDev < 30) {
+                repStab.innerHTML = "A-TIER (Solid)";
+                repStab.className = "report-val grade-a";
+                advStab.innerText = "Good control. Minor jitters detected. Try lowering your vertical sensitivity slightly.";
+            } else {
+                repStab.innerHTML = "C-TIER (Shaky)";
+                repStab.className = "report-val grade-c";
+                advStab.innerText = "Detected high vertical variance. You are pulling down inconsistently (fast then slow). Practice a smooth, constant pull.";
+            }
+
+            // 4. Flicking/Transfer Analysis (Based on Score vs Stability)
+            // High score + Low Stability = Spraying and Praying
+            // Low score + High Stability = Too slow on transfer
+            
+            if (score > 15) {
+                repFlick.innerHTML = "AGGRESSIVE";
+                repFlick.className = "report-val grade-s";
+                advFlick.innerText = "Excellent transfer speed. You are snapping to targets confidently.";
+            } else if (score < 8) {
+                repFlick.innerHTML = "HESITANT";
+                repFlick.className = "report-val grade-c";
+                advFlick.innerText = "You are spending too much time visually confirming the target before shooting. Trust your muscle memory and snap faster.";
+            } else {
+                repFlick.innerHTML = "BALANCED";
+                repFlick.className = "report-val grade-a";
+                advFlick.innerText = "Good rhythm. To improve, try shooting BEFORE your crosshair perfectly lands on the center (micro-adjust while spraying).";
+            }
         }
     </script>
 </body>
