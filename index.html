@@ -6,10 +6,11 @@
     <title>R6 COACH PRO: COMMAND CENTER</title>
     <style>
         :root { 
+            /* THEME: Matte Black, Space Gray, Electric Blue */
             --bg: #050505;
             --card: #141416;
             --panel: #1c1c1e;
-            --accent: #38bdf8;          
+            --accent: #38bdf8;          /* Electric Blue */
             --accent-glow: rgba(56, 189, 248, 0.4);
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
@@ -27,6 +28,7 @@
             overflow-x: hidden;
         }
 
+        /* --- ICONS (SVG) --- */
         .icon-lg { width: 64px; height: 64px; fill: var(--accent); margin-bottom: 20px; }
 
         /* --- VIEW MANAGEMENT --- */
@@ -48,10 +50,10 @@
             text-shadow: 0 0 40px var(--accent-glow); text-align: center;
         }
 
-        .module-grid { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
+        .module-grid { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1400px; }
 
         .module-card {
-            width: 320px; height: 380px;
+            width: 300px; height: 380px;
             background: var(--card); border: var(--border); border-radius: 20px;
             padding: 40px 30px;
             display: flex; flex-direction: column; align-items: center; justify-content: space-between;
@@ -188,12 +190,14 @@
     <div id="dashboard-view" class="view-section active">
         <div class="dash-title">R6 COACH PRO</div>
         <div class="module-grid">
+            
             <div class="module-card" onclick="goToView('trainer-view')">
                 <svg class="icon-lg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4zm4 2c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
                 <h2>PEEK TRAINER</h2>
                 <p>Mechanics, rhythm, and pre-fire timing. Master the A-D-E-Q sequence.</p>
                 <div class="module-btn">ENTER SIMULATION</div>
             </div>
+            
             <div class="module-card" onclick="goToView('strat-view')">
                 <svg class="icon-lg" viewBox="0 0 24 24"><path d="M20.5 3l-6 2-6-2-5.5 1.83v15.34l6 2 6-2 5.5 1.83v-15.34l-5.5-1.83zm-6 15.34l-6 2v-12.68l6-2v12.68zm6-2v-12.68l-6 2v12.68l6-2z"/></svg>
                 <h2>STRAT BOARD</h2>
@@ -211,6 +215,18 @@
                     <div class="module-btn">START SESSION</div>
                 </div>
             </a>
+
+            <a href="recoil.html" style="text-decoration: none;">
+                <div class="module-card">
+                    <svg class="icon-lg" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    </svg>
+                    <h2>RECOIL LAB</h2>
+                    <p>Vertical pull-down trainer. Keep the dot centered against rising recoil.</p>
+                    <div class="module-btn">ENTER LAB</div>
+                </div>
+            </a>
+
         </div>
     </div>
 
@@ -359,13 +375,18 @@
         let difficultyMult = 1.0;
         let mode = 'full';
         
+        // Physics
         let cx=0, tx=0, cLean=0, tLean=0;
         const LERP_SPEED = 0.4;
 
+        // Audio Engine
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let musicInterval = null;
         let musicActive = false;
 
+        // ==========================================
+        // GAME ENGINE
+        // ==========================================
         function loop() {
             cx += (tx - cx) * LERP_SPEED;
             cLean += (tLean - cLean) * LERP_SPEED;
@@ -426,6 +447,9 @@
             el.style.left = base; el.style.transform = `translateX(${offset}px)`;
         }
 
+        // ==========================================
+        // STATS & UI
+        // ==========================================
         function updateStats(ms, rank) {
             if(rank !== 'FAIL' && rank !== 'PRACTICE') attempts++;
             if(rank === 'S') { streak++; sRanks++; triggerPopup("+" + streak); if(streak > 0 && streak % 10 === 0) fireConfetti(); } 
@@ -454,6 +478,9 @@
             updateStats(0, 'FAIL');
         }
 
+        // ==========================================
+        // AUDIO ENGINE
+        // ==========================================
         function toggleMusic() {
             if(musicActive) {
                 clearInterval(musicInterval); musicActive=false;
@@ -472,6 +499,7 @@
             clearInterval(musicInterval);
             let step = 0;
             musicInterval = setInterval(() => {
+                // Simple Kick on 1, Snare on 3
                 if(step % 4 === 0) playDrum(150, 'sine'); // Kick
                 if(step % 4 === 2) playDrum(200, 'triangle'); // Snare
                 step++;
@@ -488,6 +516,9 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
+        // ==========================================
+        // SETTINGS & NAVIGATION
+        // ==========================================
         function setBPM(val) { bpm = val; document.getElementById('bpm-val').innerText = val; if(musicActive) playBeat(); }
         function setDoorWidth(val) { document.getElementById('doorframe').style.width = val + 'px'; document.getElementById('doorframe').style.marginLeft = -(val/2) + 'px'; }
         function setDifficulty(val) { difficultyMult = parseFloat(val); }
