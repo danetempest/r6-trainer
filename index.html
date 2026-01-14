@@ -2,244 +2,744 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>R6 Tactician Pro</title>
-    <script src="maps.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R6 COACH PRO: FOCUS LAB</title>
     <style>
-        :root { --bg: #09090b; --panel: #18181b; --accent: #00d4ff; --gold: #ffcc00; --danger: #ff4b4b; --success: #00ff88; }
-        body { margin: 0; background: var(--bg); color: #e0e0e0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; user-select: none; }
+        :root { 
+            --p-blue: #3b82f6; 
+            --p-gold: #f59e0b; 
+            --p-red: #ef4444; 
+            --p-green: #10b981;
+            --p-purple: #8b5cf6;
+            --bg: #09090b; 
+            --card: #18181b;
+            --glass: rgba(24, 24, 27, 0.6);
+            --border: rgba(255, 255, 255, 0.08);
+        }
         
-        /* SIDEBAR */
-        .sidebar { width: 340px; background: var(--panel); border-right: 1px solid #333; display: flex; flex-direction: column; z-index: 200; box-shadow: 5px 0 30px rgba(0,0,0,0.5); }
+        * { box-sizing: border-box; user-select: none; }
         
-        .header { padding: 20px; border-bottom: 1px solid #333; background: #111; }
-        h1 { margin: 0; font-size: 1.1rem; color: var(--accent); letter-spacing: 1px; }
+        body { 
+            background: var(--bg); 
+            color: #fff; 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            margin: 0; 
+            min-height: 100vh; 
+            overflow-x: hidden;
+        }
 
-        /* NAVIGATION MENU */
-        .nav-box { padding: 15px; border-bottom: 1px solid #333; background: #141417; }
-        .nav-label { font-size: 0.7rem; color: #666; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
-        .nav-btn { display: block; text-decoration: none; background: #222; color: #ccc; padding: 10px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #333; font-size: 0.85rem; font-weight: bold; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
-        .nav-btn:hover { background: #333; color: #fff; border-color: #555; }
-        .nav-btn.active { background: rgba(0, 212, 255, 0.1); color: var(--accent); border-color: var(--accent); }
+        /* --- LAYOUT CONTAINERS --- */
+        .main-container {
+            width: 1000px;
+            max-width: 95vw;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-        /* MAP SELECTOR UI */
-        .map-selector { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
-        select { background: #222; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        select:hover { border-color: var(--accent); }
+        .lab-card { 
+            background: var(--card); 
+            padding: 24px 28px; 
+            border-radius: 12px; 
+            border: 1px solid #27272a; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+            position: relative;
+        }
 
-        /* TOOLKIT */
-        .inventory { flex-grow: 1; padding: 15px; overflow-y: auto; }
-        .tool-card { background: #27272a; padding: 12px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
-        .tool-card:hover { background: #333; border-color: #555; }
-        .tool-card.active { border-color: var(--accent); background: rgba(0, 212, 255, 0.1); }
+        /* --- BENTO GRID STATS --- */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 12px; 
+            margin-bottom: 20px; 
+        }
         
-        /* ACTIONS */
-        .controls { padding: 15px; background: #111; border-top: 1px solid #333; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; text-transform: uppercase; font-size: 0.8rem; transition: 0.2s; }
-        .btn:hover { filter: brightness(1.2); }
-        .btn-save { background: var(--gold); color: #000; }
-        .btn-load { background: var(--accent); color: #000; }
-        .btn-clear { background: #333; color: #fff; }
-
-        /* STAGE */
-        .stage { flex-grow: 1; position: relative; background: #050505; overflow: hidden; cursor: crosshair; display: flex; align-items: center; justify-content: center; }
-        .map-layer { max-width: 95%; max-height: 95%; pointer-events: none; opacity: 0.9; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .bento-card { 
+            background: var(--glass); 
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative;
+        }
         
-        /* GADGETS */
-        .gadget { position: absolute; transform: translate(-50%, -50%); z-index: 100; cursor: grab; filter: drop-shadow(0 4px 6px #000); }
-        .gadget:active { cursor: grabbing; }
-        .gadget:hover { filter: drop-shadow(0 0 5px var(--accent)); transform: translate(-50%, -50%) scale(1.05); }
+        .card-hero { 
+            grid-column: span 2; 
+            grid-row: span 2; 
+            background: rgba(0,0,0,0.3); 
+            border-color: rgba(59, 130, 246, 0.3); 
+        }
         
-        /* VISUALS */
-        .g-wall { width: 80px; height: 8px; background: #666; border: 1px solid #aaa; border-radius: 2px; }
-        .g-rotate { width: 50px; height: 50px; border: 3px dashed var(--accent); border-radius: 50%; background: rgba(0,212,255,0.2); }
-        .g-shield { width: 50px; height: 12px; background: rgba(255,204,0,0.3); border: 2px solid #ffcc00; border-radius: 6px; }
+        .card-settings {
+            grid-column: span 2;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            gap: 10px;
+        }
 
-        /* DATA OUTPUT */
-        .io-area { margin-top: 10px; display: none; }
-        textarea { width: 100%; height: 60px; background: #000; border: 1px solid #333; color: var(--success); font-family: monospace; font-size: 0.7rem; padding: 5px; resize: none; }
+        .stat-label { font-size: 0.65rem; color: #71717a; letter-spacing: 1px; margin-bottom: 4px; text-transform: uppercase; font-weight: 700; }
+        .hero-val { font-size: 3.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 30px rgba(59, 130, 246, 0.2); line-height: 1; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: #fff; }
+        .rank-badge { position: absolute; top: 15px; right: 20px; font-size: 2rem; font-weight: 900; }
+        .rank-S { color: var(--p-gold); text-shadow: 0 0 15px var(--p-gold); }
+        .rank-A { color: var(--p-blue); }
+        .rank-F { color: var(--p-red); }
+
+        /* --- GAME VIEWPORT --- */
+        .viewport { 
+            height: 400px; 
+            background: linear-gradient(180deg, #050508 0%, #0a0a0f 100%);
+            border-radius: 8px; 
+            margin: 0 0 20px 0; 
+            position: relative; 
+            overflow: hidden; 
+            border: 2px solid #27272a; 
+            perspective: 1200px; 
+            perspective-origin: 50% 50%; /* Adjusted for head-level sync */
+            transition: all 0.3s ease;
+        }
+
+        /* Theater Mode */
+        body.theater-mode { padding: 0; background: #000; justify-content: center; }
+        body.theater-mode .main-container { width: 100vw; max-width: none; height: 100vh; gap: 0; }
+        body.theater-mode .lab-card { display: none; } /* Hide main wrapper styling */
+        body.theater-mode .viewport { 
+            width: 100vw; height: 100vh; margin: 0; border: none; border-radius: 0; 
+            position: fixed; top: 0; left: 0; z-index: 999;
+        }
+        body.theater-mode .hud-overlay { display: block; } /* Custom HUD for theater */
+
+        /* --- 3D WORLD --- */
+        .world-container { position: absolute; width: 300%; height: 100%; left: -100%; top: 0; transform-style: preserve-3d; }
+        .hallway { position: absolute; width: 33.33%; height: 100%; left: 33.33%; transform-style: preserve-3d; }
+        
+        .floor { 
+            position: absolute; width: 2000px; height: 2000px; left: 50%; bottom: -600px; margin-left: -1000px; 
+            background: repeating-linear-gradient(90deg, #1a1a1f 0px, #1a1a1f 48px, #222 48px, #222 50px), 
+                        repeating-linear-gradient(0deg, #1a1a1f 0px, #1a1a1f 48px, #222 48px, #222 50px); 
+            transform: rotateX(85deg); 
+        }
+        
+        .wall { position: absolute; width: 800px; height: 100%; top: -200px; background: linear-gradient(90deg, #000, #111); }
+        .wall-left { left: -300px; transform: rotateY(80deg); }
+        .wall-right { right: -300px; transform: rotateY(-80deg); background: linear-gradient(-90deg, #000, #111); }
+        
+        /* Doorframe (Variable Width) */
+        .doorframe { position: absolute; width: 140px; height: 100%; left: 50%; top: 0; margin-left: -70px; z-index: 10; pointer-events: none; transition: width 0.3s, margin-left 0.3s; }
+        .door-col { position: absolute; width: 40px; height: 100%; background: #1f1f22; border: 1px solid #333; box-shadow: inset 0 0 20px #000; }
+        
+        /* Enemy Target (Head-Level Locked) */
+        .enemy-target { 
+            position: absolute; 
+            top: 50%; /* LOCKED TO CROSSHAIR HEIGHT */
+            left: 50%;
+            margin-top: -30px; /* Center the head (which is roughly 20px high + neck) */
+            width: 40px; height: 80px; 
+            z-index: 5; 
+            transition: transform 0.1s, opacity 0.2s; 
+        }
+        .enemy-target.dead { opacity: 0; transform: scale(0.9); }
+        .enemy-head { 
+            position: absolute; top: 0; left: 5px; width: 30px; height: 30px; 
+            background: #fca5a5; border-radius: 50%; border: 2px solid #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+        .enemy-body { 
+            position: absolute; top: 32px; left: 0; width: 40px; height: 50px; 
+            background: #ef4444; border-radius: 4px; opacity: 0.6; 
+        }
+
+        /* --- WEAPON & HUD --- */
+        .weapon-container { position: absolute; bottom: 0; left: 50%; width: 200px; height: 160px; margin-left: -100px; z-index: 50; pointer-events: none; }
+        .weapon-model { position: absolute; bottom: -20px; left: 50%; margin-left: -40px; transition: transform 0.05s ease-out; }
+        .gun-body { width: 80px; height: 45px; background: #222; border-radius: 4px; border: 1px solid #444; position: relative; }
+        .gun-optic { position: absolute; top: -15px; left: 20px; width: 40px; height: 15px; background: #111; border: 1px solid var(--p-blue); box-shadow: 0 0 5px var(--p-blue); }
+        .muzzle-flash { position: absolute; top: -40px; right: -60px; width: 80px; height: 80px; background: radial-gradient(#fff, #f59e0b, transparent); border-radius: 50%; opacity: 0; transform: scale(0.5); pointer-events: none; }
+        .muzzle-flash.active { opacity: 1; transform: scale(1.5); transition: 0.05s; }
+
+        .crosshair { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 20px; height: 20px; z-index: 100; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ch-line { position: absolute; background: #0f0; }
+        .ch-h { width: 100%; height: 2px; }
+        .ch-v { width: 2px; height: 100%; }
+        .ch-dot { width: 4px; height: 4px; background: #0f0; border-radius: 50%; display: block; }
+        .crosshair.pulse { animation: chPulse 0.5s infinite; }
+        @keyframes chPulse { 0% { opacity: 1; transform:translate(-50%, -50%) scale(1); } 50% { opacity: 0.5; transform:translate(-50%, -50%) scale(1.2); } 100% { opacity: 1; transform:translate(-50%, -50%) scale(1); } }
+
+        /* Floating HUD Keys */
+        .combo-track { 
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
+            z-index: 80; display: flex; gap: 10px; 
+        }
+        .key-node { 
+            width: 45px; height: 45px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 8px; display: flex; align-items: center; justify-content: center; 
+            font-size: 1.2rem; font-weight: 800; color: rgba(255,255,255,0.4); 
+            text-shadow: 0 2px 4px #000; transition: 0.1s;
+        }
+        .key-node.active { opacity: 1; border-color: var(--p-blue); color: #fff; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); transform: scale(1.1); }
+        .key-node.hit { background: var(--p-blue); border-color: var(--p-blue); color: #fff; }
+
+        .feedback-text { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); font-size: 2.5rem; font-weight: 900; opacity: 0; transition: 0.2s; z-index: 100; text-shadow: 0 4px 10px rgba(0,0,0,0.8); white-space: nowrap; }
+        .feedback-text.show { opacity: 1; top: 20%; }
+        
+        .phase-badge { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); padding: 6px 12px; background: rgba(0,0,0,0.8); border-radius: 4px; z-index: 90; font-weight: bold; font-size: 0.8rem; letter-spacing: 1px; }
+        .phase-intel { color: var(--p-gold); border: 1px solid var(--p-gold); }
+        .phase-kill { color: var(--p-red); border: 1px solid var(--p-red); }
+
+        .theater-btn { position: absolute; top: 15px; right: 15px; z-index: 200; background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; }
+        .theater-btn:hover { background: #333; }
+
+        /* --- CONTROL PANELS --- */
+        .controls-wrapper { display: flex; flex-direction: column; gap: 10px; }
+        
+        .control-row { display: flex; gap: 10px; width: 100%; }
+        .glass-panel { background: var(--glass); border: 1px solid var(--border); border-radius: 8px; padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        
+        .mode-select { background: #09090b; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 6px; font-family: 'Inter', sans-serif; cursor: pointer; width: 100%; }
+        
+        .slider-group { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        .styled-slider { flex: 1; height: 4px; background: #333; border-radius: 2px; -webkit-appearance: none; }
+        .styled-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--p-blue); border-radius: 50%; cursor: pointer; }
+        
+        .color-dots { display: flex; gap: 8px; }
+        .color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+        .color-dot.active { border-color: #fff; transform: scale(1.1); }
+
+        .daily-goal { width: 100%; margin-bottom: 5px; }
+        .daily-bar { width: 100%; height: 6px; background: #222; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+        .daily-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--p-blue), var(--p-purple)); transition: 0.5s; }
+
+        /* --- MAP COMMAND CENTER --- */
+        .map-section { background: var(--card); border: 1px solid #27272a; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        .map-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        .map-frame-container { width: 100%; height: 600px; background: #000; border-radius: 8px; border: 2px solid #27272a; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* ANIMATIONS */
+        .shake { animation: shake 0.1s cubic-bezier(.36,.07,.19,.97) both; }
+        .chromatic { animation: chromatic 0.2s ease-out; }
+        @keyframes shake { 0% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(5px, 5px) rotate(1deg); } 50% { transform: translate(-5px, -5px) rotate(-1deg); } 75% { transform: translate(5px, -5px) rotate(0); } 100% { transform: translate(0, 0) rotate(0); } }
+        @keyframes chromatic { 0% { filter: drop-shadow(4px 0 0 rgba(255,0,0,0.8)) drop-shadow(-4px 0 0 rgba(0,255,255,0.8)); } 100% { filter: none; } }
+        
+        .btn { background: #18181b; border: 1px solid #333; color: #aaa; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.75rem; transition: 0.2s; }
+        .btn:hover { color: #fff; border-color: #555; }
+        .btn.active { background: var(--p-blue); color: #fff; border-color: var(--p-blue); }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="header">
-            <h1>R6 TACTICIAN</h1>
-            
-            <div class="map-selector">
-                <select id="mapGroup" onchange="updateFloors()">
-                    <option value="" disabled selected>Select Map...</option>
-                </select>
-                <select id="mapFloor" onchange="loadSelectedMap()" disabled>
-                    <option value="" disabled selected>Select Floor...</option>
-                </select>
-            </div>
-        </div>
+<div class="main-container">
 
-        <div class="nav-box">
-            <div class="nav-label">TRAINING MODULES</div>
-            <a href="index.html" class="nav-btn active">
-                <span>🗺️</span> Map Tactician
-            </a>
-            <a href="shaiiko-peaking.html" class="nav-btn">
-                <span>🎯</span> Shaiiko Peaking Lab
-            </a>
+    <div class="lab-card" style="padding: 15px 20px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#888; font-weight:700;">
+            <span>DAILY GOAL: S-RANKS</span>
+            <span id="daily-text" style="color:#fff;">0/50</span>
         </div>
-
-        <div class="inventory" id="invList"></div>
-
-        <div class="controls">
-            <button class="btn btn-save" onclick="exportStrat()">💾 SAVE STRAT CODE</button>
-            <button class="btn btn-load" onclick="importStrat()">📂 LOAD STRAT CODE</button>
-            <button class="btn btn-clear" onclick="clearBoard()">CLEAR BOARD</button>
-            
-            <div class="io-area" id="ioBox">
-                <div style="font-size:0.7rem; color:#666; margin-bottom:4px;">STRAT DATA STRING</div>
-                <textarea id="dataStr" placeholder="Paste strat code here..." onclick="this.select()"></textarea>
-            </div>
-        </div>
+        <div class="daily-bar"><div class="daily-fill" id="daily-fill"></div></div>
     </div>
 
-    <div class="stage" id="stage">
-        <img id="mapImg" class="map-layer" style="display:none">
-        <div id="welcome" style="color:#333; font-weight:bold; font-size:1.5rem;">SELECT A MAP</div>
-    </div>
-
-    <script>
-        // --- 1. CONFIG ---
-        const TOOLS = {
-            'wall': { name: 'Reinforce', w: 80, h: 8 },
-            'rotate': { name: 'Rotate', w: 50, h: 50 },
-            'shield': { name: 'Shield', w: 50, h: 10 }
-        };
-
-        // --- 2. INIT ---
-        let items = [];
-        let activeTool = null;
+    <div class="stats-grid">
+        <div class="bento-card card-hero">
+            <span class="stat-label">LAST PEEK</span>
+            <span class="hero-val" id="time-display">0<span style="font-size:1.5rem; color:#666">ms</span></span>
+            <div class="rank-badge" id="rank-badge">-</div>
+            <div style="font-size:0.75rem; color:var(--p-green); margin-top:5px; font-weight:700">AVG: <span id="avg-disp">0ms</span></div>
+        </div>
         
-        function initMaps() {
-            if(typeof MAP_DATABASE === 'undefined') {
-                console.error("Error: maps.js not found!");
-                return;
-            }
-            const groupSel = document.getElementById('mapGroup');
-            for(let mapName in MAP_DATABASE) {
-                let opt = document.createElement('option');
-                opt.value = mapName;
-                opt.innerText = mapName;
-                groupSel.appendChild(opt);
-            }
-        }
+        <div class="bento-card">
+            <span class="stat-label">STREAK</span>
+            <span class="stat-val" id="streak-disp">0</span>
+        </div>
+        
+        <div class="bento-card">
+            <span class="stat-label">ACCURACY</span>
+            <span class="stat-val" id="acc-disp">0%</span>
+        </div>
+        
+        <div class="bento-card card-settings">
+            <div style="flex:1">
+                <span class="stat-label">CROSSHAIR COLOR</span>
+                <div class="color-dots" style="margin-top:8px;">
+                    <div class="color-dot active" style="background:#0f0" onclick="setCHColor('#0f0', this)"></div>
+                    <div class="color-dot" style="background:#0ff" onclick="setCHColor('#0ff', this)"></div>
+                    <div class="color-dot" style="background:#f00" onclick="setCHColor('#f00', this)"></div>
+                    <div class="color-dot" style="background:#fff" onclick="setCHColor('#fff', this)"></div>
+                </div>
+            </div>
+            <div style="flex:1">
+                <span class="stat-label">OPACITY</span>
+                <input type="range" class="styled-slider" min="0.1" max="1" step="0.1" value="1" oninput="setCHOpacity(this.value)">
+                <div style="margin-top:8px;">
+                    <label style="font-size:0.7rem; color:#aaa; display:flex; align-items:center; gap:5px;">
+                        <input type="checkbox" checked onchange="toggleCHDot(this.checked)"> CENTER DOT
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        function updateFloors() {
-            const groupName = document.getElementById('mapGroup').value;
-            const floorSel = document.getElementById('mapFloor');
-            floorSel.innerHTML = '<option value="" disabled selected>Select Floor...</option>';
-            floorSel.disabled = false;
+    <div class="viewport" id="viewport">
+        <button class="theater-btn" onclick="toggleFullscreen()">⛶ THEATER</button>
+        <div class="feedback-text" id="feedback-text">READY</div>
+        <div class="phase-badge phase-intel" id="phase-badge">PHASE 1: INTEL</div>
+        
+        <div class="crosshair" id="crosshair">
+            <div class="ch-line ch-h"></div>
+            <div class="ch-line ch-v"></div>
+            <div class="ch-dot" id="ch-dot"></div>
+        </div>
 
-            const floors = MAP_DATABASE[groupName];
-            for(let floorName in floors) {
-                let opt = document.createElement('option');
-                opt.value = floors[floorName];
-                opt.innerText = floorName;
-                floorSel.appendChild(opt);
-            }
-        }
+        <div class="combo-track">
+            <div id="k0" class="key-node">A</div>
+            <div id="k1" class="key-node">D</div>
+            <div id="k2" class="key-node">E</div>
+            <div id="k3" class="key-node">Q</div>
+        </div>
 
-        function loadSelectedMap() {
-            const url = document.getElementById('mapFloor').value;
-            document.getElementById('mapImg').src = url;
-            document.getElementById('mapImg').style.display = 'block';
-            document.getElementById('welcome').style.display = 'none';
-            clearBoard();
-        }
-
-        function renderInv() {
-            const list = document.getElementById('invList');
-            list.innerHTML = '';
-            for(let k in TOOLS) {
-                let div = document.createElement('div');
-                div.className = `tool-card ${activeTool === k ? 'active' : ''}`;
-                div.onclick = () => { activeTool = (activeTool === k ? null : k); renderInv(); };
-                div.innerHTML = `<span style="font-weight:bold">${TOOLS[k].name}</span>`;
-                list.appendChild(div);
-            }
-        }
-
-        // --- 3. INTERACTION ---
-        const stage = document.getElementById('stage');
-        const mapImg = document.getElementById('mapImg');
-
-        stage.addEventListener('mousedown', e => {
-            if(activeTool && (e.target.id === 'stage' || e.target.tagName === 'IMG')) {
-                const ref = mapImg.style.display === 'none' ? stage : mapImg;
-                const r = ref.getBoundingClientRect();
+        <div class="world-container" id="world">
+            <div class="hallway">
+                <div class="floor"></div>
+                <div class="wall wall-left"></div>
+                <div class="wall wall-right"></div>
                 
-                if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+                <div class="doorframe" id="doorframe">
+                    <div class="door-col" style="left:0"></div>
+                    <div class="door-col" style="right:0"></div>
+                </div>
 
-                const x = ((e.clientX - r.left) / r.width) * 100;
-                const y = ((e.clientY - r.top) / r.height) * 100;
-                
-                createItem(x, y, activeTool);
+                <div class="enemy-target" id="enemy">
+                    <div class="enemy-head"></div>
+                    <div class="enemy-body"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="weapon-container">
+            <div class="weapon-model" id="weapon">
+                <div class="gun-body">
+                    <div class="gun-optic"></div>
+                    <div class="muzzle-flash" id="muzzle-flash"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-wrapper">
+        <div class="control-row">
+            <div class="glass-panel" style="flex:1.5">
+                <span class="stat-label">GAME MODE</span>
+                <select class="mode-select" style="margin-top:5px;" onchange="setMode(this.value)">
+                    <option value="full">FULL DRILL (INTEL + KILL)</option>
+                    <option value="intel">INTEL ONLY</option>
+                    <option value="kill">KILL ONLY</option>
+                    <option value="alt">ALTERNATING SIDES</option>
+                </select>
+            </div>
+            
+            <div class="glass-panel" style="flex:2">
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="stat-label">DIFFICULTY BPM</span>
+                    <span class="stat-label" style="color:var(--p-blue)" id="bpm-val">120</span>
+                </div>
+                <input type="range" class="styled-slider" style="margin-top:10px;" min="60" max="220" step="5" value="120" oninput="setBPM(this.value)">
+            </div>
+            
+            <div class="glass-panel" style="flex:1.5">
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="stat-label">SLIVER DRILL (WIDTH)</span>
+                    <span class="stat-label" id="width-val">Normal</span>
+                </div>
+                <input type="range" class="styled-slider" style="margin-top:10px;" min="60" max="200" value="140" oninput="setDoorWidth(this.value)">
+            </div>
+        </div>
+
+        <div class="control-row">
+            <button class="btn active" id="music-btn" style="flex:1" onclick="toggleMusic()">🎵 BEAT SYNC: OFF</button>
+            <button class="btn" style="flex:1" onclick="swapSide()">🔁 SWAP SIDE (RIGHT)</button>
+            <button class="btn" style="flex:1" onclick="resetStats()">🗑️ RESET STATS</button>
+        </div>
+    </div>
+
+    <div class="map-section">
+        <div class="map-header">
+            <span class="stat-label" style="font-size:1rem; color:#fff;">STRATEGY BOARD</span>
+            <div style="display:flex; gap:10px;">
+                <select class="mode-select" style="width:auto;" onchange="loadMap(this.value)">
+                    <option value="oregon">OREGON</option>
+                    <option value="clubhouse">CLUBHOUSE</option>
+                    <option value="coastline">COASTLINE</option>
+                    <option value="bank">BANK</option>
+                    <option value="chalet">CHALET</option>
+                    <option value="kafe">KAFE</option>
+                    <option value="consulate">CONSULATE</option>
+                    <option value="border">BORDER</option>
+                </select>
+                <a id="popout-link" href="#" target="_blank" class="btn">↗ OPEN IN NEW TAB</a>
+            </div>
+        </div>
+        <div class="map-frame-container">
+            <iframe id="r6-frame" src="" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // === CONFIGURATION ===
+    const SEQS = { 'ADEQ': ['a','d','e','q'], 'DAQE': ['d','a','q','e'] };
+    let currentSide = 'ADEQ';
+    let trainingType = 'full';
+    let idx = 0;
+    let phase = 'intel';
+    let startTime = 0;
+    let keyTimes = [];
+    
+    // Stats
+    let allTimes = [];
+    let sRanks = 0;
+    let attempts = 0;
+    let streak = 0;
+
+    // Settings (Persisted)
+    let bpm = 120;
+    let doorWidth = 140;
+    
+    // Audio Engine
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let musicInterval = null;
+    let beatStep = 0;
+    let musicActive = false;
+
+    // === INIT & PERSISTENCE ===
+    window.onload = () => {
+        loadSettings();
+        loadMap('oregon');
+        randomizeTarget();
+        updateHUD();
+    };
+
+    function loadSettings() {
+        if(localStorage.getItem('r6_bpm')) setBPM(localStorage.getItem('r6_bpm'));
+        if(localStorage.getItem('r6_width')) setDoorWidth(localStorage.getItem('r6_width'));
+        if(localStorage.getItem('r6_ch_color')) setCHColor(localStorage.getItem('r6_ch_color'));
+    }
+
+    // === GAME LOOP & PHYSICS ===
+    let cx = 0, tx = 0, cLean = 0, tLean = 0, cRecoil = 0, tRecoil = 0;
+    
+    function loop() {
+        // Smooth Movement
+        cx += (tx - cx) * 0.15;
+        cLean += (tLean - cLean) * 0.15;
+        cRecoil += (tRecoil - cRecoil) * 0.1;
+        
+        // Decay Recoil
+        tRecoil *= 0.9; 
+        
+        // Apply Transforms
+        document.getElementById('world').style.transform = `translateX(${cx}px)`;
+        // Weapon: Lean + Recoil
+        document.getElementById('weapon').style.transform = `translateX(${cLean * 20}px) translateY(${-cRecoil}px) rotateZ(${cLean * 15 - (cRecoil/5)}deg)`;
+        
+        requestAnimationFrame(loop);
+    }
+    loop();
+
+    // === INPUT LOGIC ===
+    window.addEventListener('keydown', e => {
+        const k = e.key.toLowerCase();
+        if(k === ' ') { e.preventDefault(); swapSide(); return; }
+        if(k === 'r') { resetStats(); return; }
+
+        const seq = SEQS[currentSide];
+        if(k === seq[idx]) {
+            // Step 1: Start
+            if(idx===0) { startTime = performance.now(); keyTimes = [startTime]; document.getElementById('k0').classList.add('active'); }
+            else keyTimes.push(performance.now());
+            
+            playSFX('click');
+            document.getElementById('k'+idx).classList.add('hit');
+
+            // Movement Logic (A-D-E-Q)
+            if(currentSide === 'ADEQ') { // Right Peek
+                if(idx===0) tx = 80;
+                if(idx===1) tx = -60;
+                if(idx===2) { tx = -80; tLean = 1; }
+                if(idx===3) { tx = -40; tLean = -0.2; }
+            } else { // Left Peek
+                if(idx===0) tx = -80;
+                if(idx===1) tx = 60;
+                if(idx===2) { tx = 80; tLean = -1; }
+                if(idx===3) { tx = 40; tLean = 0.2; }
             }
-        });
 
-        function createItem(x, y, type) {
-            const id = Date.now();
-            const item = { id, x, y, type, rot: 0 };
-            items.push(item);
-            renderItem(item);
+            idx++;
+            if(idx===4) finishSequence();
+            
+        } else if (['a','d','e','q'].includes(k)) {
+            fail("MISS");
         }
+    });
 
-        function renderItem(item) {
-            const el = document.createElement('div');
-            el.className = `gadget g-${item.type}`;
-            el.id = `g-${item.id}`;
-            el.style.left = item.x + '%';
-            el.style.top = item.y + '%';
-            if(item.type === 'wall' && item.rot === 0 && item.y < 50) item.rot = 90;
-            el.style.transform = `translate(-50%, -50%) rotate(${item.rot}deg)`;
-
-            el.oncontextmenu = e => { e.preventDefault(); deleteItem(item.id); };
-            el.onclick = e => { 
-                e.stopPropagation(); 
-                item.rot += 45; 
-                el.style.transform = `translate(-50%, -50%) rotate(${item.rot}deg)`; 
-            };
-
-            stage.appendChild(el);
+    function finishSequence() {
+        const total = performance.now() - startTime;
+        
+        if(phase === 'intel') {
+            document.getElementById('feedback-text').innerText = "SPOTTED";
+            document.getElementById('feedback-text').className = "feedback-text show";
+            playSFX('success');
+            
+            if(trainingType === 'full' || trainingType === 'alt') {
+                setPhase('kill');
+            }
+            // Intel doesn't count for rank, just practice
+        } else {
+            // Kill Phase
+            tRecoil = 50 + (bpm/4); // Recoil Kick based on BPM
+            document.getElementById('muzzle-flash').classList.add('active');
+            document.getElementById('enemy').classList.add('dead');
+            playSFX('shoot');
+            
+            const target = (60000/bpm) * 3;
+            let rank = total < target*0.85 ? 'S' : (total < target ? 'A' : 'D');
+            
+            const fb = document.getElementById('feedback-text');
+            fb.innerText = rank==='S'?"GODLIKE":"CLEAN";
+            fb.style.color = rank==='S'?"var(--p-gold)":"#fff";
+            fb.className = "feedback-text show";
+            
+            if(rank==='S') {
+                document.getElementById('viewport').classList.add('shake');
+                sRanks++;
+                playSFX('success');
+            }
+            
+            updateStats(total, rank);
+            
+            if(trainingType === 'full' || trainingType === 'alt') {
+                setPhase('intel');
+                if(trainingType === 'alt') swapSide();
+            }
         }
+        
+        setTimeout(resetRound, 150);
+    }
 
-        function deleteItem(id) {
-            items = items.filter(i => i.id !== id);
-            document.getElementById(`g-${id}`).remove();
+    function fail(reason) {
+        document.getElementById('viewport').classList.add('chromatic');
+        const fb = document.getElementById('feedback-text');
+        fb.innerText = reason; fb.style.color = "var(--p-red)"; fb.className = "feedback-text show";
+        playSFX('fail');
+        streak = 0;
+        updateHUD();
+        setTimeout(resetRound, 200);
+    }
+
+    function resetRound() {
+        idx = 0; tx = 0; tLean = 0;
+        document.querySelectorAll('.key-node').forEach(k => k.className = 'key-node');
+        document.getElementById('muzzle-flash').classList.remove('active');
+        document.getElementById('viewport').classList.remove('shake');
+        document.getElementById('viewport').classList.remove('chromatic');
+        document.getElementById('feedback-text').className = "feedback-text";
+        randomizeTarget();
+    }
+
+    // === TARGET & PHYSICS ===
+    function randomizeTarget() {
+        // Only move Horizontal. Vertical is LOCKED to CSS top:50%
+        const offset = (Math.random() * 60) - 30;
+        const base = currentSide === 'ADEQ' ? 'calc(50% + 70px)' : 'calc(50% - 110px)';
+        const el = document.getElementById('enemy');
+        el.style.left = base;
+        el.style.transform = `translateX(${offset}px)`;
+        el.classList.remove('dead');
+    }
+
+    // === AUDIO ENGINE (PROCEDURAL PHONK) ===
+    function playSFX(type) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        
+        if(type==='click') { osc.type='triangle'; osc.frequency.value=800; gain.gain.value=0.1; osc.start(); osc.stop(audioCtx.currentTime+0.05); }
+        if(type==='shoot') { osc.type='sawtooth'; osc.frequency.value=100; gain.gain.value=0.2; osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime+0.1); osc.start(); osc.stop(audioCtx.currentTime+0.1); }
+        if(type==='success') { osc.type='sine'; osc.frequency.value=1200; gain.gain.value=0.2; osc.start(); osc.stop(audioCtx.currentTime+0.2); }
+        if(type==='fail') { osc.type='square'; osc.frequency.value=150; gain.gain.value=0.2; osc.start(); osc.stop(audioCtx.currentTime+0.2); }
+    }
+
+    function toggleMusic() {
+        const btn = document.getElementById('music-btn');
+        if(musicActive) {
+            clearInterval(musicInterval); musicActive=false;
+            btn.innerText = "🎵 BEAT SYNC: OFF"; btn.classList.remove('active');
+        } else {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            musicActive = true;
+            btn.innerText = "🎵 BEAT SYNC: ON"; btn.classList.add('active');
+            playBeat();
         }
+    }
 
-        function clearBoard() {
-            items = [];
-            document.querySelectorAll('.gadget').forEach(e => e.remove());
+    function playBeat() {
+        if(!musicActive) return;
+        const interval = 60000 / bpm;
+        clearInterval(musicInterval);
+        
+        let step = 0;
+        musicInterval = setInterval(() => {
+            // Kick on 1, Snare on 3
+            if(step % 4 === 0) playDrum('kick');
+            if(step % 4 === 2) playDrum('snare');
+            playDrum('hihat');
+            step++;
+        }, interval / 4); // 16th notes
+    }
+
+    function playDrum(type) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        
+        const t = audioCtx.currentTime;
+        if(type==='kick') {
+            osc.frequency.setValueAtTime(150, t);
+            osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.5);
+            gain.gain.setValueAtTime(0.5, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+            osc.start(t); osc.stop(t + 0.5);
+        } else if(type==='snare') {
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(0.2, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+            osc.start(t); osc.stop(t + 0.2);
+        } else { // Hihat
+            osc.type = 'square';
+            osc.frequency.value = 8000;
+            gain.gain.value = 0.05;
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+            osc.start(t); osc.stop(t + 0.05);
         }
+    }
 
-        // --- 4. IO ---
-        function exportStrat() {
-            document.getElementById('ioBox').style.display = 'block';
-            document.getElementById('dataStr').value = JSON.stringify(items);
+    // === SETTINGS & UI ===
+    function setBPM(val) {
+        bpm = val;
+        document.getElementById('bpm-val').innerText = val;
+        localStorage.setItem('r6_bpm', val);
+        if(musicActive) playBeat(); // Restart music at new speed
+    }
+
+    function setDoorWidth(val) {
+        doorWidth = val;
+        document.getElementById('doorframe').style.width = val + 'px';
+        document.getElementById('doorframe').style.marginLeft = -(val/2) + 'px';
+        document.getElementById('width-val').innerText = val < 100 ? "PIXEL" : (val > 160 ? "WIDE" : "NORMAL");
+        localStorage.setItem('r6_width', val);
+    }
+
+    function setCHColor(c, el) {
+        document.querySelectorAll('.ch-line').forEach(l => l.style.background = c);
+        document.getElementById('ch-dot').style.background = c;
+        localStorage.setItem('r6_ch_color', c);
+        if(el) {
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            el.classList.add('active');
         }
+    }
+    
+    function setCHOpacity(val) { document.getElementById('crosshair').style.opacity = val; }
+    function toggleCHDot(on) { document.getElementById('ch-dot').style.display = on ? 'block' : 'none'; }
 
-        function importStrat() {
-            document.getElementById('ioBox').style.display = 'block';
-            const str = document.getElementById('dataStr').value;
-            if(!str) return;
-            try {
-                const data = JSON.parse(str);
-                clearBoard();
-                items = data;
-                items.forEach(renderItem);
-                alert("Strat Loaded!");
-            } catch(e) { alert("Invalid Code"); }
+    function setPhase(p) {
+        phase = p;
+        const pb = document.getElementById('phase-badge');
+        pb.innerText = p==='kill' ? "PHASE 2: KILL" : "PHASE 1: INTEL";
+        pb.className = p==='kill' ? "phase-badge phase-kill" : "phase-badge phase-intel";
+    }
+
+    function updateStats(ms, rank) {
+        attempts++;
+        if(rank === 'S') streak++; else if(rank === 'F' || rank === 'D') streak = 0;
+        
+        allTimes.push(ms);
+        if(allTimes.length > 50) allTimes.shift();
+        
+        const avg = Math.round(allTimes.reduce((a,b)=>a+b)/allTimes.length);
+        
+        document.getElementById('time-display').innerHTML = Math.round(ms) + '<span style="font-size:1.5rem; color:#666">ms</span>';
+        document.getElementById('rank-badge').innerText = rank;
+        document.getElementById('rank-badge').className = `rank-badge rank-${rank}`;
+        document.getElementById('avg-disp').innerText = avg + "ms";
+        document.getElementById('streak-disp').innerText = streak;
+        document.getElementById('acc-disp').innerText = Math.round((sRanks/attempts)*100) + "%";
+        document.getElementById('daily-text').innerText = sRanks + "/50";
+        document.getElementById('daily-fill').style.width = Math.min(100, (sRanks/50)*100) + "%";
+        
+        // Key Splits (Approximate for display)
+        if(keyTimes.length === 4) {
+            document.getElementById('split-1').innerText = Math.round(keyTimes[1]-keyTimes[0]);
+            document.getElementById('split-2').innerText = Math.round(keyTimes[2]-keyTimes[1]);
+            document.getElementById('split-3').innerText = Math.round(keyTimes[3]-keyTimes[2]);
         }
+    }
 
-        initMaps();
-        renderInv();
-    </script>
+    function swapSide() {
+        currentSide = currentSide === 'ADEQ' ? 'DAQE' : 'ADEQ';
+        const k = document.querySelectorAll('.key-node');
+        const btn = document.querySelector('button[onclick="swapSide()"]');
+        if(currentSide === 'ADEQ') {
+            k[0].innerText='A'; k[1].innerText='D'; k[3].innerText='Q';
+            btn.innerText = "🔁 SWAP SIDE (RIGHT)";
+        } else {
+            k[0].innerText='D'; k[1].innerText='A'; k[3].innerText='E';
+            btn.innerText = "🔁 SWAP SIDE (LEFT)";
+        }
+        resetRound();
+    }
+
+    function resetStats() {
+        sRanks = 0; streak = 0; attempts = 0; allTimes = [];
+        updateStats(0, '-');
+    }
+
+    function toggleFullscreen() {
+        if(!document.fullscreenElement) { document.body.requestFullscreen(); document.body.classList.add('theater-mode'); }
+        else { document.exitFullscreen(); document.body.classList.remove('theater-mode'); }
+    }
+
+    // === MAP LOGIC ===
+    const MAP_LINKS = {
+        'oregon': 'https://r6calls.com/maps/oregon',
+        'clubhouse': 'https://r6calls.com/maps/clubhouse',
+        'coastline': 'https://r6calls.com/maps/coastline',
+        'consulate': 'https://r6calls.com/maps/consulate',
+        'bank': 'https://r6calls.com/maps/bank',
+        'chalet': 'https://r6calls.com/maps/chalet',
+        'kafe': 'https://r6calls.com/maps/kafe-dostoyevsky',
+        'border': 'https://r6calls.com/maps/border'
+    };
+    function loadMap(map) {
+        const url = MAP_LINKS[map] || MAP_LINKS['oregon'];
+        document.getElementById('r6-frame').src = url;
+        document.getElementById('popout-link').href = url;
+    }
+
+</script>
 </body>
 </html>
