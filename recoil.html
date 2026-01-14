@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>R6 Recoil Combine</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
     <style>
         :root {
             --bg: #09090b;
@@ -12,8 +13,12 @@
             --panel: #18181b;
         }
         body {
-            margin: 0;
-            background: var(--bg);
+            background-color: var(--bg);
+            /* Tactical Grid Pattern */
+            background-image: 
+                linear-gradient(rgba(239, 68, 68, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(239, 68, 68, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
             color: var(--text);
             font-family: 'Segoe UI', system-ui, sans-serif;
             overflow: hidden;
@@ -24,6 +29,11 @@
             height: 100vh;
             user-select: none;
         }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
         .home-btn {
             position: absolute; top: 20px; left: 20px;
@@ -42,7 +52,6 @@
             background: radial-gradient(circle at center, #18181b 0%, #000 100%);
         }
 
-        /* HUD */
         #hud {
             position: absolute; top: 20px; width: 100%;
             display: flex; justify-content: center; gap: 40px; pointer-events: none;
@@ -54,7 +63,6 @@
         #timer-disp { color: var(--accent); }
         #score-disp { color: var(--success); }
 
-        /* RECOIL HEAT BAR */
         #heat-bar-container {
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 200px; height: 6px; background: #333; border-radius: 3px; overflow: hidden;
@@ -64,7 +72,6 @@
             transition: width 0.1s linear;
         }
 
-        /* OVERLAYS */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(9, 9, 11, 0.95);
@@ -84,7 +91,6 @@
         }
         .btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
 
-        /* COACH REPORT CARD */
         .report-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
             width: 80%; max-width: 600px; margin-top: 20px;
@@ -146,19 +152,16 @@
         <div id="report-screen" class="overlay" style="display:none;">
             <h1>SESSION ANALYSIS</h1>
             <div class="report-grid">
-                
                 <div class="report-item">
                     <div class="report-title">Recoil Stability</div>
                     <div class="report-val" id="rep-stability">--</div>
                     <div class="report-advice" id="adv-stability">Analyzing vertical control...</div>
                 </div>
-
                 <div class="report-item">
                     <div class="report-title">Flick Accuracy</div>
                     <div class="report-val" id="rep-flick">--</div>
                     <div class="report-advice" id="adv-flick">Analyzing over-flicks...</div>
                 </div>
-
             </div>
             <button class="btn" onclick="triggerCountdown()">GO AGAIN</button>
         </div>
@@ -167,8 +170,6 @@
     <script>
         const canvas = document.getElementById('recoilCanvas');
         const ctx = canvas.getContext('2d');
-        
-        // UI Elements
         const startScreen = document.getElementById('start-screen');
         const countdownScreen = document.getElementById('countdown-screen');
         const reportScreen = document.getElementById('report-screen');
@@ -177,47 +178,30 @@
         const scoreDisp = document.getElementById('score-disp');
         const heatFill = document.getElementById('heat-fill');
 
-        // Game State
         let isRunning = false;
         let isShooting = false;
         let timeLeft = 60;
         let score = 0;
         let animationFrame;
         
-        // Physics
         let ballX = 400; 
         let ballY = 300; 
         let recoilForce = 0; 
         
-        // Target Logic
-        let targets = []; // {x, y, active, hp, maxHp}
+        let targets = []; 
         const ZONE_RADIUS = 50; 
         const BALL_RADIUS = 6; 
 
-        // --- ANALYTICS DATA ---
-        let stabilitySamples = []; // Y-axis deviation while shooting
+        let stabilitySamples = []; 
         let overflicks = 0;
         let totalTransfers = 0;
-        let lastTargetPos = {x:400, y:300}; // Where the last target was
+        let lastTargetPos = {x:400, y:300}; 
 
-        // Pointer Lock Setup
         canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
 
-        // ==============================================
-        // INPUT HANDLING
-        // ==============================================
-        document.addEventListener("mousedown", (e) => {
-            if (e.button === 0) isShooting = true;
-        });
-        document.addEventListener("mouseup", () => {
-            isShooting = false;
-            // Reset recoil slightly on release (Tap firing mechanic)
-            recoilForce = Math.max(1.0, recoilForce * 0.5);
-        });
+        document.addEventListener("mousedown", (e) => { if (e.button === 0) isShooting = true; });
+        document.addEventListener("mouseup", () => { isShooting = false; recoilForce = Math.max(1.0, recoilForce * 0.5); });
 
-        // ==============================================
-        // GAME FLOW
-        // ==============================================
         function triggerCountdown() {
             startScreen.style.display = 'none';
             reportScreen.style.display = 'none';
@@ -226,14 +210,12 @@
             
             let count = 3;
             countVal.innerText = count;
-            
             const int = setInterval(() => {
                 count--;
                 if (count > 0) {
                     countVal.innerText = count;
-                    // Reset Animation
                     countVal.style.animation = 'none';
-                    countVal.offsetHeight; /* trigger reflow */
+                    countVal.offsetHeight; 
                     countVal.style.animation = 'popIn 0.5s ease-out';
                 } else {
                     clearInterval(int);
@@ -244,8 +226,6 @@
 
         function startGame() {
             countdownScreen.style.display = 'none';
-            
-            // Reset Stats
             ballX = 400; ballY = 300;
             recoilForce = 1.0;
             timeLeft = 60;
@@ -255,15 +235,13 @@
             totalTransfers = 0;
             isShooting = false;
             
-            // Spawn initial targets
             targets = [];
-            spawnTarget(true); // Active
-            spawnTarget(false); // Next
+            spawnTarget(true); 
+            spawnTarget(false); 
 
             isRunning = true;
             document.addEventListener("mousemove", handleMouse, false);
             
-            // Start Timer
             const timeInt = setInterval(() => {
                 if (!isRunning) { clearInterval(timeInt); return; }
                 timeLeft--;
@@ -275,7 +253,6 @@
         }
 
         function spawnTarget(isActive) {
-            // Margin 100px from edges
             const x = Math.random() * (700 - 100) + 100;
             const y = Math.random() * (500 - 100) + 100;
             targets.push({ x: x, y: y, active: isActive, hp: 100 });
@@ -283,72 +260,47 @@
 
         function handleMouse(e) {
             if (!isRunning) return;
-            // Always allow mouse movement
             ballY += e.movementY; 
             ballX += e.movementX;
-            
-            // Bounds check (Keep ball in canvas)
-            if (ballX < 0) ballX = 0;
-            if (ballX > 800) ballX = 800;
-            if (ballY < 0) ballY = 0;
-            if (ballY > 600) ballY = 600;
+            if (ballX < 0) ballX = 0; if (ballX > 800) ballX = 800;
+            if (ballY < 0) ballY = 0; if (ballY > 600) ballY = 600;
         }
 
         function gameLoop() {
             if (!isRunning) return;
 
-            // --- 1. RECOIL PHYSICS ---
             if (isShooting) {
-                // Progressive recoil: Gets harder the longer you hold
                 recoilForce = Math.min(4.5, recoilForce + 0.02); 
-                
-                // Jitter (Random horizontal shake)
                 let jitter = (Math.random() - 0.5) * (recoilForce * 1.2);
-                
-                ballY -= recoilForce; // Move Up
+                ballY -= recoilForce; 
                 ballX += jitter;
             } else {
-                // Recovery (Centering) - Optional mechanic
-                // For now, we just stop adding force.
-                recoilForce = 1.0; // Reset "heat"
+                recoilForce = 1.0; 
             }
 
-            // --- 2. TARGET LOGIC & SCORING ---
             let activeT = targets.find(t => t.active);
             if (activeT) {
                 let dist = Math.hypot(ballX - activeT.x, ballY - activeT.y);
-                
-                // Analytics: Track Stability only when shooting near target
                 if (isShooting && dist < ZONE_RADIUS * 2) {
-                    // Calculate vertical deviation from target center
                     let yDev = Math.abs(ballY - activeT.y);
                     stabilitySamples.push(yDev);
                 }
-
-                // Damage Logic
                 if (isShooting && dist < ZONE_RADIUS) {
-                    activeT.hp -= 2.5; // Damage rate
-                    
+                    activeT.hp -= 2.5; 
                     if (activeT.hp <= 0) {
-                        // TARGET DESTROYED
                         score++;
                         scoreDisp.innerText = score;
                         totalTransfers++;
-                        lastTargetPos = {x: activeT.x, y: activeT.y}; // Save for flick analysis
-
-                        // Remove dead, activate next
+                        lastTargetPos = {x: activeT.x, y: activeT.y}; 
                         targets = targets.filter(t => t !== activeT);
                         if (targets.length > 0) {
                             targets[0].active = true;
-                            // Check for Overflick on NEXT frame (did user overshoot?)
-                            checkForOverflick(targets[0]);
                         }
                         spawnTarget(false);
                     }
                 }
             }
 
-            // --- 3. UI VISUALS ---
             let heatPercent = (recoilForce / 4.5) * 100;
             heatFill.style.width = heatPercent + "%";
             heatFill.style.background = isShooting ? "var(--accent)" : "#444";
@@ -357,42 +309,30 @@
             animationFrame = requestAnimationFrame(gameLoop);
         }
 
-        function checkForOverflick(newTarget) {
-            // Logic: If user is moving fast towards new target, check if they overshoot next frame.
-            // Simplified: We calculate this in post-analysis based on Stability.
-            // Real-time overflick detection is complex without storing velocity vectors.
-            // We will rely on Stability Variance for the coach report.
-        }
-
         function draw() {
             ctx.fillStyle = "#18181b";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Targets
             targets.forEach(t => {
                 ctx.beginPath();
                 ctx.arc(t.x, t.y, ZONE_RADIUS, 0, Math.PI * 2);
-                
                 if (t.active) {
                     ctx.strokeStyle = "#22c55e"; 
                     ctx.lineWidth = 4;
-                    // HP Fill
                     ctx.fillStyle = `rgba(34, 197, 94, ${t.hp / 200})`; 
                     ctx.fill();
                 } else {
-                    ctx.strokeStyle = "#52525b"; // Grey
+                    ctx.strokeStyle = "#52525b"; 
                     ctx.lineWidth = 2;
                 }
                 ctx.stroke();
             });
 
-            // Player Crosshair
             ctx.beginPath();
             ctx.arc(ballX, ballY, BALL_RADIUS, 0, Math.PI * 2);
             ctx.fillStyle = isShooting ? "#ef4444" : "#fff";
             ctx.fill();
             
-            // Tension Line (Visual Aid)
             let activeT = targets.find(t => t.active);
             if (activeT && isShooting) {
                 ctx.beginPath();
@@ -409,29 +349,22 @@
             document.exitPointerLock();
             document.removeEventListener("mousemove", handleMouse, false);
             cancelAnimationFrame(animationFrame);
-
             generateReport();
             reportScreen.style.display = 'flex';
         }
 
-        // ==============================================
-        // ADAPTIVE COACH LOGIC
-        // ==============================================
         function generateReport() {
-            // 1. Calculate Stability (Vertical Variance)
             let avgDev = 0;
             if (stabilitySamples.length > 0) {
                 let sum = stabilitySamples.reduce((a, b) => a + b, 0);
                 avgDev = Math.round(sum / stabilitySamples.length);
             }
 
-            // 2. DOM Elements
             const repStab = document.getElementById('rep-stability');
             const advStab = document.getElementById('adv-stability');
             const repFlick = document.getElementById('rep-flick');
             const advFlick = document.getElementById('adv-flick');
 
-            // 3. Stability Analysis
             if (avgDev < 15) {
                 repStab.innerHTML = "S-TIER (Laser)";
                 repStab.className = "report-val grade-s";
@@ -446,10 +379,6 @@
                 advStab.innerText = "Detected high vertical variance. You are pulling down inconsistently (fast then slow). Practice a smooth, constant pull.";
             }
 
-            // 4. Flicking/Transfer Analysis (Based on Score vs Stability)
-            // High score + Low Stability = Spraying and Praying
-            // Low score + High Stability = Too slow on transfer
-            
             if (score > 15) {
                 repFlick.innerHTML = "AGGRESSIVE";
                 repFlick.className = "report-val grade-s";
