@@ -10,7 +10,7 @@
             --bg-color: #1e1e24;
             --wall-color: #0f0f12;
             --accent-color: #4cc9f0;
-            --enemy-head: #e74c3c;  /* Red for enemy head */
+            --enemy-head: #e74c3c;
             --enemy-body: #c0392b;
         }
 
@@ -19,7 +19,7 @@
             color: #fff;
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            overflow: hidden; /* Stop scrolling */
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -28,8 +28,6 @@
             user-select: none;
         }
 
-        h2 { margin-top: 0; color: var(--accent-color); text-transform: uppercase; letter-spacing: 2px; }
-        
         /* --- THE GAME SCENE --- */
         #game-container {
             position: relative;
@@ -39,35 +37,36 @@
             border: 2px solid #333;
             border-radius: 8px;
             overflow: hidden;
-            cursor: crosshair; /* FPS Style Cursor */
+            cursor: crosshair;
             box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
-        /* The cover the enemy hides behind */
+        /* The Cover (Right Side) */
         .wall {
             position: absolute;
             right: 0;
             top: 0;
-            width: 50%; /* Covers half the screen */
+            width: 50%; /* Covers pixels 400px to 800px */
             height: 100%;
             background: linear-gradient(90deg, #111 0%, var(--wall-color) 20%);
             border-left: 4px solid #000;
-            z-index: 10; /* In front of enemy */
+            z-index: 10; /* Important: Wall is ON TOP of enemy */
         }
 
         /* The Enemy Character */
         #enemy {
             position: absolute;
-            right: 400px; /* Hidden behind the wall initially */
+            /* FIXED: Put him DEEP inside the wall initially so he is hidden */
+            right: 200px; 
             bottom: 140px;
             width: 60px;
             height: 140px;
             z-index: 5; /* Behind the wall */
-            transition: transform 0.1s cubic-bezier(0.1, 0.7, 1.0, 0.1); /* Snappy Swing */
-            display: none; /* Hidden until game starts */
+            transition: transform 0.1s cubic-bezier(0.1, 0.7, 1.0, 0.1); /* Fast swing */
+            display: none; 
         }
 
-        /* CSS Shapes for the Enemy */
+        /* Enemy Body Parts */
         .head {
             width: 40px; height: 40px;
             background-color: var(--enemy-head);
@@ -86,21 +85,21 @@
             position: absolute; top: 50px; left: -10px;
         }
 
-        /* --- ANIMATIONS & STATES --- */
+        /* --- ANIMATIONS --- */
         
-        /* The "Swing" - Moves enemy left into view */
+        /* FIXED: Swing distance increased to clear the wall */
         .swinging {
-            transform: translateX(-150px); 
+            transform: translateX(-350px); 
         }
 
-        /* Dead Enemy */
+        /* Dead Animation */
         .enemy-dead {
-            transform: translateX(-150px) rotate(-90deg) translateY(100px) !important;
+            transform: translateX(-350px) rotate(-90deg) translateY(100px) !important;
             transition: transform 0.3s ease-in !important;
             filter: grayscale(100%);
         }
 
-        /* Player Death Screen */
+        /* Overlays */
         .you-died-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255, 0, 0, 0.4);
@@ -111,66 +110,52 @@
             transition: opacity 0.1s;
         }
 
-        /* UI Overlay */
-        #ui-layer {
-            position: absolute; top: 20px; left: 20px;
-            font-size: 1.2rem; z-index: 20;
-        }
-
+        #ui-layer { position: absolute; top: 20px; left: 20px; font-size: 1.2rem; z-index: 20; }
         #start-msg {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             font-size: 2rem; font-weight: bold; color: var(--accent-color);
-            z-index: 20;
-            pointer-events: none;
+            z-index: 20; pointer-events: none;
         }
-
     </style>
 </head>
 <body onmousedown="fireShot()">
 
     <div id="game-container">
-        
         <div id="ui-layer">
             <div>Reaction: <span id="time-disp" style="color:var(--accent-color)">0 ms</span></div>
             <div>Status: <span id="status-disp">Waiting...</span></div>
         </div>
 
         <div id="start-msg">CLICK SCREEN TO START</div>
-
         <div id="death-screen" class="you-died-overlay">YOU DIED</div>
 
         <div id="enemy">
             <div class="head"></div>
-            <div class="body">
-                <div class="gun"></div>
-            </div>
+            <div class="body"><div class="gun"></div></div>
         </div>
 
         <div class="wall"></div>
-
     </div>
 
     <div style="margin-top: 20px; text-align: center; color: #888;">
-        <p>Instructions: Click to start holding the angle. When he swings, click FAST.</p>
-        <p><strong>Senior Dev Note:</strong> Enemy kills you in exactly <strong>280ms</strong> (Average Human Reaction).</p>
+        <p>Instructions: Click to start. Wait for the swing. <strong>Click immediately when he appears.</strong></p>
         <a href="index.html" style="color: var(--accent-color); text-decoration: none;">← Back to Dashboard</a>
     </div>
 
     <script>
-        // --- GAME VARIABLES ---
         const enemyEl = document.getElementById('enemy');
         const deathScreen = document.getElementById('death-screen');
         const startMsg = document.getElementById('start-msg');
         const timeDisp = document.getElementById('time-disp');
         const statusDisp = document.getElementById('status-disp');
 
-        let gameState = "IDLE"; // IDLE, HOLDING, SWINGING, ENDED
+        let gameState = "IDLE"; 
         let swingTime = 0;
         let killTimer = null;
         
-        // DIFFICULTY SETTINGS
-        const ENEMY_KILL_SPEED = 280; // He shoots you after 280ms. Lower = Harder.
+        // Settings
+        const ENEMY_KILL_SPEED = 300; // Time (ms) before you die.
 
         function fireShot() {
             if (gameState === "IDLE" || gameState === "ENDED") {
@@ -179,34 +164,37 @@
             }
 
             if (gameState === "HOLDING") {
-                // You clicked before he appeared (Pre-fire fail)
-                endGame("PREFIRE");
+                endGame("PREFIRE"); // Clicked too early
                 return;
             }
 
             if (gameState === "SWINGING") {
-                // SUCCESS! You clicked while he was visible
+                // Success
                 const reactionTime = Date.now() - swingTime;
                 killEnemy(reactionTime);
             }
         }
 
         function resetGame() {
-            // 1. Reset Visuals
             gameState = "HOLDING";
-            enemyEl.style.display = "block";
-            enemyEl.className = ""; // Remove swing/dead classes
-            enemyEl.style.transform = "translateX(0)"; // Put back behind wall
+            clearTimeout(killTimer);
+            
+            // Reset Visuals
+            enemyEl.style.display = "block"; // Render him (hidden behind wall)
+            enemyEl.classList.remove("swinging", "enemy-dead"); 
+            enemyEl.style.transform = ""; // Reset position to behind wall
+            
             deathScreen.style.opacity = "0";
             startMsg.style.display = "none";
             statusDisp.innerText = "HOLDING ANGLE...";
             statusDisp.style.color = "#fff";
             timeDisp.innerText = "0 ms";
 
-            // 2. Random Timer for the Swing (2 to 5 seconds)
+            // Random Delay 2-5s
             const randomDelay = Math.random() * 3000 + 2000;
 
             setTimeout(() => {
+                // Only swing if we are still waiting (user hasn't clicked/reset)
                 if(gameState === "HOLDING") {
                     enemySwing();
                 }
@@ -217,11 +205,10 @@
             gameState = "SWINGING";
             swingTime = Date.now();
 
-            // 1. CSS Animation: Enemy moves out
+            // 1. Move him out!
             enemyEl.classList.add("swinging");
 
-            // 2. Start the "You Die" Timer
-            // If you don't click within ENEMY_KILL_SPEED, you lose.
+            // 2. Start Death Timer
             killTimer = setTimeout(() => {
                 if(gameState === "SWINGING") {
                     playerDies();
@@ -230,11 +217,9 @@
         }
 
         function killEnemy(ms) {
-            clearTimeout(killTimer); // Stop him from killing you
+            clearTimeout(killTimer);
             gameState = "ENDED";
-
-            // Visuals
-            enemyEl.classList.add("enemy-dead"); // Triggers fall animation
+            enemyEl.classList.add("enemy-dead");
             statusDisp.innerText = "NICE SHOT!";
             statusDisp.style.color = "#2ecc71";
             timeDisp.innerText = ms + " ms";
@@ -244,9 +229,7 @@
 
         function playerDies() {
             gameState = "ENDED";
-
-            // Visuals
-            deathScreen.style.opacity = "1"; // Red flash
+            deathScreen.style.opacity = "1";
             statusDisp.innerText = "YOU DIED";
             statusDisp.style.color = "#e74c3c";
             startMsg.innerText = "CLICK TO RETRY";
@@ -256,10 +239,14 @@
         function endGame(reason) {
             if(reason === "PREFIRE") {
                 gameState = "ENDED";
-                statusDisp.innerText = "TOO EARLY! (Revealed Position)";
+                clearTimeout(killTimer);
+                statusDisp.innerText = "PRE-FIRE! (Don't guess)";
                 statusDisp.style.color = "orange";
                 startMsg.innerText = "CLICK TO RETRY";
                 startMsg.style.display = "block";
+                
+                // Show him so user knows he was there
+                enemyEl.classList.add("swinging");
             }
         }
     </script>
