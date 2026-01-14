@@ -6,11 +6,10 @@
     <title>TEMPEST R6 TRAINER</title>
     <style>
         :root { 
-            /* THEME: Matte Black, Space Gray, Electric Blue */
             --bg: #050505;
             --card: #141416;
             --panel: #1c1c1e;
-            --accent: #38bdf8;          /* Electric Blue */
+            --accent: #38bdf8;          
             --accent-glow: rgba(56, 189, 248, 0.4);
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
@@ -28,7 +27,6 @@
             overflow-x: hidden;
         }
 
-        /* --- ICONS (SVG) --- */
         .icon-lg { width: 64px; height: 64px; fill: var(--accent); margin-bottom: 20px; }
 
         /* --- VIEW MANAGEMENT --- */
@@ -184,6 +182,22 @@
         .btn:hover { border-color: var(--accent); color: #fff; }
         .btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
+        /* STRAT BOARD SPECIFIC */
+        .strat-display-box {
+            background: #111; border: 1px solid #333; border-radius: 12px; padding: 20px;
+            margin-top: 20px; width: 100%; max-width: 600px;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .strat-row { display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .strat-key { color: var(--accent); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
+        .strat-val { color: #ddd; font-size: 0.9rem; text-align: right; max-width: 70%; }
+        
+        .active-strat-text {
+            font-size: 1.1rem; color: #555; font-style: italic; text-align: center;
+            padding: 15px; background: #0a0a0a; border-radius: 8px; border: 1px dashed #333;
+            transition: 0.3s;
+        }
+
     </style>
 </head>
 <body>
@@ -203,8 +217,8 @@
             <div class="module-card" onclick="goToView('strat-view')">
                 <svg class="icon-lg" viewBox="0 0 24 24"><path d="M20.5 3l-6 2-6-2-5.5 1.83v15.34l6 2 6-2 5.5 1.83v-15.34l-5.5-1.83zm-6 15.34l-6 2v-12.68l6-2v12.68zm6-2v-12.68l-6 2v12.68l6-2z"/></svg>
                 <h2>STRAT BOARD</h2>
-                <p>Connect to R6Calls.com for full map blueprints and callouts.</p>
-                <div class="module-btn">OPEN MAPS</div>
+                <p>Tactical database, callouts, and random strat generator.</p>
+                <div class="module-btn">OPEN TACTICS</div>
             </div>
             
             <a href="pixel-peek.html" style="text-decoration: none;">
@@ -334,19 +348,13 @@
     <div id="strat-view" class="view-section">
         <div class="top-bar">
             <button class="back-btn" onclick="goToView('dashboard-view')">← DASHBOARD</button>
-            <div style="font-weight:900; color:#fff;">STRATEGY LINK</div>
+            <div style="font-weight:900; color:#fff;">TACTICAL BRIEFING</div>
         </div>
 
-        <div class="module-card" style="width: 100%; height: 500px; justify-content: center; gap: 20px; cursor: default; border-color: #333; transform: none;">
-            <svg class="icon-lg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-            <h2>CONNECT TO R6CALLS.COM</h2>
-            <p style="max-width: 500px;">
-                Securely launch the tactical board in a dedicated window.<br>
-                Select a map below to begin.
-            </p>
+        <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
             
-            <div style="display:flex; gap:10px; width: 100%; max-width: 500px; justify-content: center;">
-                <select class="select-box" id="r6-map-select" style="width: 200px;">
+            <div style="display:flex; gap:10px; width: 100%; max-width: 600px; margin-bottom:20px;">
+                <select class="select-box" id="r6-map-select" style="flex:2" onchange="updateStratDisplay()">
                     <option value="oregon">Oregon</option>
                     <option value="clubhouse">Clubhouse</option>
                     <option value="coastline">Coastline</option>
@@ -355,8 +363,27 @@
                     <option value="chalet">Chalet</option>
                     <option value="kafe">Kafe</option>
                 </select>
-                <button class="module-btn" style="width: 150px;" onclick="launchR6Calls()">LAUNCH MAP</button>
+                <button class="module-btn" style="flex:1" onclick="generateStrat()">ROLL STRAT</button>
+                <button class="module-btn" style="flex:1; background:#222; color:#fff; border:1px solid #444;" onclick="launchR6Calls()">MAP VIEW</button>
             </div>
+
+            <div class="strat-display-box">
+                <div class="strat-row">
+                    <span class="strat-key">META OPERATORS</span>
+                    <span class="strat-val" id="ops-list">--</span>
+                </div>
+                <div class="strat-row">
+                    <span class="strat-key">KEY CALLOUTS</span>
+                    <span class="strat-val" id="callouts-list">--</span>
+                </div>
+                <div style="margin-top:10px;">
+                    <span class="strat-key" style="display:block; margin-bottom:10px; text-align:center;">ACTIVE STRATEGY</span>
+                    <div id="active-strat" class="active-strat-text">
+                        Select 'ROLL STRAT' to generate a plan.
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -364,7 +391,7 @@
 
     <script>
         // ==========================================
-        // CONFIG & VARIABLES
+        // SHAIIKO TRAINER LOGIC
         // ==========================================
         const SEQS = { 'ADEQ': ['a','d','e','q'], 'DAQE': ['d','a','q','e'] };
         let currentSide = 'ADEQ';
@@ -377,18 +404,13 @@
         let difficultyMult = 1.0;
         let mode = 'full';
         
-        // Physics
         let cx=0, tx=0, cLean=0, tLean=0;
         const LERP_SPEED = 0.4;
 
-        // Audio Engine
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let musicInterval = null;
         let musicActive = false;
 
-        // ==========================================
-        // GAME ENGINE
-        // ==========================================
         function loop() {
             cx += (tx - cx) * LERP_SPEED;
             cLean += (tLean - cLean) * LERP_SPEED;
@@ -449,9 +471,6 @@
             el.style.left = base; el.style.transform = `translateX(${offset}px)`;
         }
 
-        // ==========================================
-        // STATS & UI
-        // ==========================================
         function updateStats(ms, rank) {
             if(rank !== 'FAIL' && rank !== 'PRACTICE') attempts++;
             if(rank === 'S') { streak++; sRanks++; triggerPopup("+" + streak); if(streak > 0 && streak % 10 === 0) fireConfetti(); } 
@@ -480,9 +499,6 @@
             updateStats(0, 'FAIL');
         }
 
-        // ==========================================
-        // AUDIO ENGINE
-        // ==========================================
         function toggleMusic() {
             if(musicActive) {
                 clearInterval(musicInterval); musicActive=false;
@@ -501,7 +517,6 @@
             clearInterval(musicInterval);
             let step = 0;
             musicInterval = setInterval(() => {
-                // Simple Kick on 1, Snare on 3
                 if(step % 4 === 0) playDrum(150, 'sine'); // Kick
                 if(step % 4 === 2) playDrum(200, 'triangle'); // Snare
                 step++;
@@ -518,29 +533,12 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        // ==========================================
-        // SETTINGS & NAVIGATION
-        // ==========================================
         function setBPM(val) { bpm = val; document.getElementById('bpm-val').innerText = val; if(musicActive) playBeat(); }
         function setDoorWidth(val) { document.getElementById('doorframe').style.width = val + 'px'; document.getElementById('doorframe').style.marginLeft = -(val/2) + 'px'; }
         function setDifficulty(val) { difficultyMult = parseFloat(val); }
         function setMode(val) { mode = val; resetRound(); }
         function triggerPopup(text) { const el = document.getElementById('streak-pop'); el.innerText = text; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
         function fireConfetti() { triggerPopup("CONFIDENCE!"); for(let i=0; i<20; i++) { const c = document.createElement('div'); c.className = 'confetti'; c.style.left = Math.random() * 100 + "%"; document.getElementById('viewport').appendChild(c); setTimeout(() => c.remove(), 1000); } }
-
-        function launchR6Calls() {
-            const map = document.getElementById('r6-map-select').value;
-            const links = {
-                'oregon': 'https://r6calls.com/maps/oregon',
-                'clubhouse': 'https://r6calls.com/maps/clubhouse',
-                'coastline': 'https://r6calls.com/maps/coastline',
-                'bank': 'https://r6calls.com/maps/bank',
-                'chalet': 'https://r6calls.com/maps/chalet',
-                'kafe': 'https://r6calls.com/maps/kafe-dostoyevsky',
-                'consulate': 'https://r6calls.com/maps/consulate'
-            };
-            window.open(links[map], 'R6StratBoard', 'width=1200,height=800,menubar=no,toolbar=no');
-        }
 
         function goToView(id) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
