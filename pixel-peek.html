@@ -29,7 +29,7 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            z-index: 1000; /* On top of everything */
+            z-index: 1000;
             background: #27272a;
             color: #a1a1aa;
             text-decoration: none;
@@ -167,17 +167,19 @@
     </div>
 
     <script>
-        // --- ELEMENTS ---
+        // --- CONFIG ---
         const enemyEl = document.getElementById('enemy');
         const feedbackMsg = document.getElementById('feedback-msg');
         const startMsg = document.getElementById('start-msg');
+        
+        // Coach Elements
         const avgDisp = document.getElementById('avg-disp');
         const scoreDisp = document.getElementById('score-disp');
         const chartBox = document.getElementById('history-chart');
         const analysisContent = document.getElementById('analysis-content');
         const noiseBtn = document.getElementById('noise-btn');
 
-        // --- STATE ---
+        // State
         let state = "IDLE"; 
         let swingStart = 0;
         let swingTimer = null;
