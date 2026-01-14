@@ -33,7 +33,6 @@
         }
 
         /* --- ICONS (SVG) --- */
-        .icon { width: 24px; height: 24px; fill: currentColor; }
         .icon-lg { width: 64px; height: 64px; fill: var(--accent); margin-bottom: 20px; }
 
         /* --- VIEW MANAGEMENT --- */
@@ -161,7 +160,7 @@
         .key-node.active { opacity: 1; border-color: var(--accent); color: #fff; box-shadow: 0 0 15px var(--accent-glow); transform: scale(1.1); }
         .key-node.hit { background: var(--accent); border-color: var(--accent); color: #000; }
 
-        /* Feedback */
+        /* Streak & Feedback */
         .feedback-text { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); font-size: 2rem; font-weight: 900; opacity: 0; transition: 0.2s; z-index: 100; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
         .feedback-text.show { opacity: 1; }
         
@@ -342,7 +341,7 @@
 
     <script>
         // ==========================================
-        // MODULE 1: PEEK TRAINER LOGIC
+        // CONFIG & VARIABLES
         // ==========================================
         const SEQS = { 'ADEQ': ['a','d','e','q'], 'DAQE': ['d','a','q','e'] };
         let currentSide = 'ADEQ';
@@ -359,6 +358,14 @@
         let cx=0, tx=0, cLean=0, tLean=0;
         const LERP_SPEED = 0.4;
 
+        // Audio Engine
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let musicInterval = null;
+        let musicActive = false;
+
+        // ==========================================
+        // GAME ENGINE
+        // ==========================================
         function loop() {
             cx += (tx - cx) * LERP_SPEED;
             cLean += (tLean - cLean) * LERP_SPEED;
@@ -368,7 +375,6 @@
         }
         loop();
 
-        // Input
         window.addEventListener('keydown', e => {
             if(!document.getElementById('trainer-view').classList.contains('active')) return;
             const k = e.key.toLowerCase();
@@ -377,6 +383,7 @@
             if(k === seq[idx]) {
                 if(idx===0) { startTime = performance.now(); document.getElementById('k0').classList.add('active'); }
                 document.getElementById('k'+idx).classList.add('hit');
+                // Movement
                 if(currentSide === 'ADEQ') {
                     if(idx===0) tx = 80; if(idx===1) tx = -60; if(idx===2) { tx = -80; tLean = 1; } if(idx===3) { tx = -40; tLean = -0.2; }
                 } else {
@@ -386,7 +393,6 @@
             } else if(['a','d','e','q'].includes(k)) { if(mode !== 'freeplay') fail(); }
         });
 
-        // Game Logic
         function finish() {
             const total = performance.now() - startTime;
             const target = (60000/bpm) * 3 * difficultyMult; 
@@ -420,7 +426,9 @@
             el.style.left = base; el.style.transform = `translateX(${offset}px)`;
         }
 
-        // Stats
+        // ==========================================
+        // STATS & UI
+        // ==========================================
         function updateStats(ms, rank) {
             if(rank !== 'FAIL' && rank !== 'PRACTICE') attempts++;
             if(rank === 'S') { streak++; sRanks++; triggerPopup("+" + streak); if(streak > 0 && streak % 10 === 0) fireConfetti(); } 
@@ -440,17 +448,54 @@
             resetRound();
         }
 
-        // Settings
-        function setBPM(val) { bpm = val; document.getElementById('bpm-val').innerText = val; }
+        // ==========================================
+        // AUDIO ENGINE
+        // ==========================================
+        function toggleMusic() {
+            if(musicActive) {
+                clearInterval(musicInterval); musicActive=false;
+                document.getElementById('music-btn').classList.remove('active');
+            } else {
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                musicActive = true;
+                document.getElementById('music-btn').classList.add('active');
+                playBeat();
+            }
+        }
+
+        function playBeat() {
+            if(!musicActive) return;
+            const interval = 60000 / bpm;
+            clearInterval(musicInterval);
+            let step = 0;
+            musicInterval = setInterval(() => {
+                // Simple Kick on 1, Snare on 3
+                if(step % 4 === 0) playDrum(150, 'sine'); // Kick
+                if(step % 4 === 2) playDrum(200, 'triangle'); // Snare
+                step++;
+            }, interval / 4);
+        }
+
+        function playDrum(freq, type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = freq; osc.type = type;
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // ==========================================
+        // SETTINGS & NAVIGATION
+        // ==========================================
+        function setBPM(val) { bpm = val; document.getElementById('bpm-val').innerText = val; if(musicActive) playBeat(); }
         function setDoorWidth(val) { document.getElementById('doorframe').style.width = val + 'px'; document.getElementById('doorframe').style.marginLeft = -(val/2) + 'px'; }
         function setDifficulty(val) { difficultyMult = parseFloat(val); }
         function setMode(val) { mode = val; resetRound(); }
         function triggerPopup(text) { const el = document.getElementById('streak-pop'); el.innerText = text; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
         function fireConfetti() { triggerPopup("CONFIDENCE!"); for(let i=0; i<20; i++) { const c = document.createElement('div'); c.className = 'confetti'; c.style.left = Math.random() * 100 + "%"; document.getElementById('viewport').appendChild(c); setTimeout(() => c.remove(), 1000); } }
 
-        // ==========================================
-        // MODULE 2: R6CALLS CONNECTION LOGIC
-        // ==========================================
         function launchR6Calls() {
             const map = document.getElementById('r6-map-select').value;
             const links = {
@@ -465,7 +510,6 @@
             window.open(links[map], 'R6StratBoard', 'width=1200,height=800,menubar=no,toolbar=no');
         }
 
-        // Navigation
         function goToView(id) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById(id).classList.add('active');
