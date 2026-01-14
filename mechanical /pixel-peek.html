@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R6 Pixel Peek Trainer</title>
+    <style>
+        /* CSS: This handles the Space Gray / Light Blue Aesthetic */
+        :root {
+            --bg-color: #1e1e24; /* Space Gray */
+            --accent-color: #4cc9f0; /* Light Blue/Cyan */
+            --text-color: #ffffff;
+            --success-color: #2ecc71; /* Green for GO */
+            --fail-color: #e74c3c; /* Red for WAIT */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #a0a0a5;
+            max-width: 600px;
+        }
+
+        /* The Main Interaction Box */
+        #game-area {
+            width: 80%;
+            max-width: 600px;
+            height: 300px;
+            background-color: #2b2b36; /* Slightly lighter gray */
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none; /* Prevents highlighting text on fast clicks */
+            transition: background-color 0.1s;
+            margin: 30px 0;
+            box-shadow: 0 0 15px rgba(76, 201, 240, 0.2);
+        }
+
+        /* Results Section */
+        #result-container {
+            visibility: hidden; /* Hidden until you play */
+        }
+
+        .stat-box {
+            background: #2b2b36;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+            text-align: left;
+        }
+
+        .highlight {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Utility classes for game states */
+        .waiting {
+            background-color: #e74c3c !important; /* Red */
+            color: white;
+            border-color: #c0392b !important;
+        }
+        
+        .go {
+            background-color: var(--accent-color) !important; /* Light Blue */
+            color: #1e1e24;
+            border-color: white !important;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>R6 Pixel Peek Trainer</h1>
+    <p>Simulate holding a tight angle. Click exactly when the box turns <strong>LIGHT BLUE</strong>.</p>
+
+    <div id="game-area" onclick="handleClick()">
+        Click to Start
+    </div>
+
+    <div id="result-container">
+        <div class="stat-box">
+            <p>Reaction Time: <span id="time-display" class="highlight">0 ms</span></p>
+            <p>Rank Assessment: <span id="rank-display">N/A</span></p>
+            <p>Senior Tip: <span id="tip-display">N/A</span></p>
+        </div>
+    </div>
+
+    <script>
+        // JAVASCRIPT: The Logic
+        
+        const gameArea = document.getElementById('game-area');
+        const resultContainer = document.getElementById('result-container');
+        const timeDisplay = document.getElementById('time-display');
+        const rankDisplay = document.getElementById('rank-display');
+        const tipDisplay = document.getElementById('tip-display');
+
+        let startTime;
+        let endTime;
+        let timeoutId;
+        let isGameRunning = false;
+        let isWaitingForGreen = false;
+
+        function handleClick() {
+            if (!isGameRunning) {
+                startGame();
+            } else if (isWaitingForGreen) {
+                // User clicked too early
+                endGame("early");
+            } else {
+                // User clicked on time
+                endGame("success");
+            }
+        }
+
+        function startGame() {
+            isGameRunning = true;
+            isWaitingForGreen = true;
+            resultContainer.style.visibility = 'hidden';
+            
+            // Set visuals to "Waiting" (Red)
+            gameArea.className = "waiting";
+            gameArea.innerText = "HOLD...";
+
+            // Random time between 2 and 5 seconds (2000 - 5000 ms)
+            // This simulates the unpredictability of an enemy swing
+            const randomDelay = Math.floor(Math.random() * 3000) + 2000;
+
+            timeoutId = setTimeout(() => {
+                // Change to GO state
+                gameArea.className = "go";
+                gameArea.innerText = "FIRE!";
+                isWaitingForGreen = false;
+                startTime = Date.now(); // Start the timer
+            }, randomDelay);
+        }
+
+        function endGame(status) {
+            isGameRunning = false;
+            clearTimeout(timeoutId); // Safety clear
+
+            if (status === "early") {
+                gameArea.className = "";
+                gameArea.innerText = "Too Early! Click to Retry";
+                gameArea.style.backgroundColor = "#2b2b36";
+            } else {
+                endTime = Date.now();
+                const reactionTime = endTime - startTime;
+                
+                // Update UI
+                gameArea.className = "";
+                gameArea.innerText = `${reactionTime} ms - Click to Retry`;
+                gameArea.style.backgroundColor = "#2b2b36";
+                
+                showResults(reactionTime);
+            }
+        }
+
+        function showResults(time) {
+            resultContainer.style.visibility = 'visible';
+            timeDisplay.innerText = time + " ms";
+
+            // R6 Specific Logic for Tips
+            if (time < 180) {
+                rankDisplay.innerText = "Champion / Pro League";
+                tipDisplay.innerText = "Incredible. You can hold 'pixel' angles. Use 1x sights for max speed.";
+            } else if (time < 250) {
+                rankDisplay.innerText = "Platinum / Diamond";
+                tipDisplay.innerText = "Solid. You will win most direct gunfights. Focus on crosshair placement now.";
+            } else if (time < 350) {
+                rankDisplay.innerText = "Gold / Silver";
+                tipDisplay.innerText = "Average. Don't hold tight angles; swing wide instead to utilize Peeker's Advantage.";
+            } else {
+                rankDisplay.innerText = "Copper / Bronze";
+                tipDisplay.innerText = "Slow. Stop holding angles. Play intel operators (Valk/Lesion) and pre-fire based on sound.";
+            }
+        }
+    </script>
+</body>
+</html>
