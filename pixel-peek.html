@@ -3,198 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>R6 Pixel Peek Trainer</title>
+    <title>R6 Pixel Peek - Live Fire</title>
     <style>
-        /* CSS: This handles the Space Gray / Light Blue Aesthetic */
+        /* --- THEME SETUP --- */
         :root {
-            --bg-color: #1e1e24; /* Space Gray */
-            --accent-color: #4cc9f0; /* Light Blue/Cyan */
-            --text-color: #ffffff;
-            --success-color: #2ecc71; /* Green for GO */
-            --fail-color: #e74c3c; /* Red for WAIT */
+            --bg-color: #1e1e24;
+            --wall-color: #0f0f12;
+            --accent-color: #4cc9f0;
+            --enemy-head: #e74c3c;  /* Red for enemy head */
+            --enemy-body: #c0392b;
         }
 
         body {
             background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            overflow: hidden; /* Stop scrolling */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            margin: 0;
-            text-align: center;
+            user-select: none;
         }
 
-        h1 {
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-
-        p {
-            color: #a0a0a5;
-            max-width: 600px;
-        }
-
-        /* The Main Interaction Box */
-        #game-area {
-            width: 80%;
-            max-width: 600px;
-            height: 300px;
-            background-color: #2b2b36; /* Slightly lighter gray */
-            border: 2px solid var(--accent-color);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: bold;
-            cursor: pointer;
-            user-select: none; /* Prevents highlighting text on fast clicks */
-            transition: background-color 0.1s;
-            margin: 30px 0;
-            box-shadow: 0 0 15px rgba(76, 201, 240, 0.2);
-        }
-
-        /* Results Section */
-        #result-container {
-            visibility: hidden; /* Hidden until you play */
-        }
-
-        .stat-box {
-            background: #2b2b36;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid var(--accent-color);
-            text-align: left;
-        }
-
-        .highlight {
-            color: var(--accent-color);
-            font-weight: bold;
-        }
-
-        /* Utility classes for game states */
-        .waiting {
-            background-color: #e74c3c !important; /* Red */
-            color: white;
-            border-color: #c0392b !important;
-        }
+        h2 { margin-top: 0; color: var(--accent-color); text-transform: uppercase; letter-spacing: 2px; }
         
-        .go {
-            background-color: var(--accent-color) !important; /* Light Blue */
-            color: #1e1e24;
-            border-color: white !important;
+        /* --- THE GAME SCENE --- */
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background: radial-gradient(circle at center, #2b2b36 0%, #000 100%);
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: crosshair; /* FPS Style Cursor */
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
+
+        /* The cover the enemy hides behind */
+        .wall {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 50%; /* Covers half the screen */
+            height: 100%;
+            background: linear-gradient(90deg, #111 0%, var(--wall-color) 20%);
+            border-left: 4px solid #000;
+            z-index: 10; /* In front of enemy */
+        }
+
+        /* The Enemy Character */
+        #enemy {
+            position: absolute;
+            right: 400px; /* Hidden behind the wall initially */
+            bottom: 140px;
+            width: 60px;
+            height: 140px;
+            z-index: 5; /* Behind the wall */
+            transition: transform 0.1s cubic-bezier(0.1, 0.7, 1.0, 0.1); /* Snappy Swing */
+            display: none; /* Hidden until game starts */
+        }
+
+        /* CSS Shapes for the Enemy */
+        .head {
+            width: 40px; height: 40px;
+            background-color: var(--enemy-head);
+            border-radius: 50%;
+            margin: 0 auto;
+            border: 2px solid #5a0b0b;
+        }
+        .body {
+            width: 60px; height: 100px;
+            background-color: var(--enemy-body);
+            border-radius: 8px;
+            margin-top: -5px;
+        }
+        .gun {
+            width: 50px; height: 10px; background: #000;
+            position: absolute; top: 50px; left: -10px;
+        }
+
+        /* --- ANIMATIONS & STATES --- */
+        
+        /* The "Swing" - Moves enemy left into view */
+        .swinging {
+            transform: translateX(-150px); 
+        }
+
+        /* Dead Enemy */
+        .enemy-dead {
+            transform: translateX(-150px) rotate(-90deg) translateY(100px) !important;
+            transition: transform 0.3s ease-in !important;
+            filter: grayscale(100%);
+        }
+
+        /* Player Death Screen */
+        .you-died-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 0, 0, 0.4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 5rem; font-weight: 900; color: #fff;
+            text-shadow: 0 0 20px #000;
+            opacity: 0; pointer-events: none; z-index: 100;
+            transition: opacity 0.1s;
+        }
+
+        /* UI Overlay */
+        #ui-layer {
+            position: absolute; top: 20px; left: 20px;
+            font-size: 1.2rem; z-index: 20;
+        }
+
+        #start-msg {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem; font-weight: bold; color: var(--accent-color);
+            z-index: 20;
+            pointer-events: none;
+        }
+
     </style>
 </head>
-<body>
+<body onmousedown="fireShot()">
 
-    <h1>R6 Pixel Peek Trainer</h1>
-    <p>Simulate holding a tight angle. Click exactly when the box turns <strong>LIGHT BLUE</strong>.</p>
+    <div id="game-container">
+        
+        <div id="ui-layer">
+            <div>Reaction: <span id="time-disp" style="color:var(--accent-color)">0 ms</span></div>
+            <div>Status: <span id="status-disp">Waiting...</span></div>
+        </div>
 
-    <div id="game-area" onclick="handleClick()">
-        Click to Start
+        <div id="start-msg">CLICK SCREEN TO START</div>
+
+        <div id="death-screen" class="you-died-overlay">YOU DIED</div>
+
+        <div id="enemy">
+            <div class="head"></div>
+            <div class="body">
+                <div class="gun"></div>
+            </div>
+        </div>
+
+        <div class="wall"></div>
+
     </div>
 
-    <div id="result-container">
-        <div class="stat-box">
-            <p>Reaction Time: <span id="time-display" class="highlight">0 ms</span></p>
-            <p>Rank Assessment: <span id="rank-display">N/A</span></p>
-            <p>Senior Tip: <span id="tip-display">N/A</span></p>
-        </div>
+    <div style="margin-top: 20px; text-align: center; color: #888;">
+        <p>Instructions: Click to start holding the angle. When he swings, click FAST.</p>
+        <p><strong>Senior Dev Note:</strong> Enemy kills you in exactly <strong>280ms</strong> (Average Human Reaction).</p>
+        <a href="index.html" style="color: var(--accent-color); text-decoration: none;">← Back to Dashboard</a>
     </div>
 
     <script>
-        // JAVASCRIPT: The Logic
+        // --- GAME VARIABLES ---
+        const enemyEl = document.getElementById('enemy');
+        const deathScreen = document.getElementById('death-screen');
+        const startMsg = document.getElementById('start-msg');
+        const timeDisp = document.getElementById('time-disp');
+        const statusDisp = document.getElementById('status-disp');
+
+        let gameState = "IDLE"; // IDLE, HOLDING, SWINGING, ENDED
+        let swingTime = 0;
+        let killTimer = null;
         
-        const gameArea = document.getElementById('game-area');
-        const resultContainer = document.getElementById('result-container');
-        const timeDisplay = document.getElementById('time-display');
-        const rankDisplay = document.getElementById('rank-display');
-        const tipDisplay = document.getElementById('tip-display');
+        // DIFFICULTY SETTINGS
+        const ENEMY_KILL_SPEED = 280; // He shoots you after 280ms. Lower = Harder.
 
-        let startTime;
-        let endTime;
-        let timeoutId;
-        let isGameRunning = false;
-        let isWaitingForGreen = false;
+        function fireShot() {
+            if (gameState === "IDLE" || gameState === "ENDED") {
+                resetGame();
+                return;
+            }
 
-        function handleClick() {
-            if (!isGameRunning) {
-                startGame();
-            } else if (isWaitingForGreen) {
-                // User clicked too early
-                endGame("early");
-            } else {
-                // User clicked on time
-                endGame("success");
+            if (gameState === "HOLDING") {
+                // You clicked before he appeared (Pre-fire fail)
+                endGame("PREFIRE");
+                return;
+            }
+
+            if (gameState === "SWINGING") {
+                // SUCCESS! You clicked while he was visible
+                const reactionTime = Date.now() - swingTime;
+                killEnemy(reactionTime);
             }
         }
 
-        function startGame() {
-            isGameRunning = true;
-            isWaitingForGreen = true;
-            resultContainer.style.visibility = 'hidden';
-            
-            // Set visuals to "Waiting" (Red)
-            gameArea.className = "waiting";
-            gameArea.innerText = "HOLD...";
+        function resetGame() {
+            // 1. Reset Visuals
+            gameState = "HOLDING";
+            enemyEl.style.display = "block";
+            enemyEl.className = ""; // Remove swing/dead classes
+            enemyEl.style.transform = "translateX(0)"; // Put back behind wall
+            deathScreen.style.opacity = "0";
+            startMsg.style.display = "none";
+            statusDisp.innerText = "HOLDING ANGLE...";
+            statusDisp.style.color = "#fff";
+            timeDisp.innerText = "0 ms";
 
-            // Random time between 2 and 5 seconds (2000 - 5000 ms)
-            // This simulates the unpredictability of an enemy swing
-            const randomDelay = Math.floor(Math.random() * 3000) + 2000;
+            // 2. Random Timer for the Swing (2 to 5 seconds)
+            const randomDelay = Math.random() * 3000 + 2000;
 
-            timeoutId = setTimeout(() => {
-                // Change to GO state
-                gameArea.className = "go";
-                gameArea.innerText = "FIRE!";
-                isWaitingForGreen = false;
-                startTime = Date.now(); // Start the timer
+            setTimeout(() => {
+                if(gameState === "HOLDING") {
+                    enemySwing();
+                }
             }, randomDelay);
         }
 
-        function endGame(status) {
-            isGameRunning = false;
-            clearTimeout(timeoutId); // Safety clear
+        function enemySwing() {
+            gameState = "SWINGING";
+            swingTime = Date.now();
 
-            if (status === "early") {
-                gameArea.className = "";
-                gameArea.innerText = "Too Early! Click to Retry";
-                gameArea.style.backgroundColor = "#2b2b36";
-            } else {
-                endTime = Date.now();
-                const reactionTime = endTime - startTime;
-                
-                // Update UI
-                gameArea.className = "";
-                gameArea.innerText = `${reactionTime} ms - Click to Retry`;
-                gameArea.style.backgroundColor = "#2b2b36";
-                
-                showResults(reactionTime);
-            }
+            // 1. CSS Animation: Enemy moves out
+            enemyEl.classList.add("swinging");
+
+            // 2. Start the "You Die" Timer
+            // If you don't click within ENEMY_KILL_SPEED, you lose.
+            killTimer = setTimeout(() => {
+                if(gameState === "SWINGING") {
+                    playerDies();
+                }
+            }, ENEMY_KILL_SPEED);
         }
 
-        function showResults(time) {
-            resultContainer.style.visibility = 'visible';
-            timeDisplay.innerText = time + " ms";
+        function killEnemy(ms) {
+            clearTimeout(killTimer); // Stop him from killing you
+            gameState = "ENDED";
 
-            // R6 Specific Logic for Tips
-            if (time < 180) {
-                rankDisplay.innerText = "Champion / Pro League";
-                tipDisplay.innerText = "Incredible. You can hold 'pixel' angles. Use 1x sights for max speed.";
-            } else if (time < 250) {
-                rankDisplay.innerText = "Platinum / Diamond";
-                tipDisplay.innerText = "Solid. You will win most direct gunfights. Focus on crosshair placement now.";
-            } else if (time < 350) {
-                rankDisplay.innerText = "Gold / Silver";
-                tipDisplay.innerText = "Average. Don't hold tight angles; swing wide instead to utilize Peeker's Advantage.";
-            } else {
-                rankDisplay.innerText = "Copper / Bronze";
-                tipDisplay.innerText = "Slow. Stop holding angles. Play intel operators (Valk/Lesion) and pre-fire based on sound.";
+            // Visuals
+            enemyEl.classList.add("enemy-dead"); // Triggers fall animation
+            statusDisp.innerText = "NICE SHOT!";
+            statusDisp.style.color = "#2ecc71";
+            timeDisp.innerText = ms + " ms";
+            startMsg.innerText = "CLICK TO GO AGAIN";
+            startMsg.style.display = "block";
+        }
+
+        function playerDies() {
+            gameState = "ENDED";
+
+            // Visuals
+            deathScreen.style.opacity = "1"; // Red flash
+            statusDisp.innerText = "YOU DIED";
+            statusDisp.style.color = "#e74c3c";
+            startMsg.innerText = "CLICK TO RETRY";
+            startMsg.style.display = "block";
+        }
+
+        function endGame(reason) {
+            if(reason === "PREFIRE") {
+                gameState = "ENDED";
+                statusDisp.innerText = "TOO EARLY! (Revealed Position)";
+                statusDisp.style.color = "orange";
+                startMsg.innerText = "CLICK TO RETRY";
+                startMsg.style.display = "block";
             }
         }
     </script>
