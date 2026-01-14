@@ -3,130 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>R6 COACH PRO: FOCUS LAB</title>
+    <title>R6 COACH PRO: COMMAND CENTER</title>
     <style>
         :root { 
-            --p-blue: #3b82f6; 
-            --p-gold: #f59e0b; 
-            --p-red: #ef4444; 
-            --p-green: #10b981;
-            --p-purple: #8b5cf6;
-            --bg: #09090b; 
-            --card: #18181b;
-            --glass: rgba(24, 24, 27, 0.6);
-            --border: rgba(255, 255, 255, 0.08);
+            /* THEME: Space Gray, Light Blue, Black */
+            --bg: #050505;              /* Pure Black Background */
+            --panel: #111111;           /* Darker Panel */
+            --card: #1c1c1e;            /* Space Gray Card */
+            --accent: #38bdf8;          /* Electric Light Blue */
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --text-main: #e2e8f0;
+            --text-dim: #94a3b8;
+            
+            --p-gold: #fbbf24;
+            --p-red: #ef4444;
+            --p-green: #22c55e;
+            
+            --glass: rgba(28, 28, 30, 0.7);
+            --border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         * { box-sizing: border-box; user-select: none; }
         
         body { 
             background: var(--bg); 
-            color: #fff; 
+            color: var(--text-main); 
             font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 20px; 
             margin: 0; 
             min-height: 100vh; 
             overflow-x: hidden;
         }
 
-        /* --- LAYOUT CONTAINERS --- */
-        .main-container {
-            width: 1000px;
-            max-width: 95vw;
+        /* --- DASHBOARD VIEW --- */
+        #dashboard-view {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100%;
+            gap: 40px;
+            animation: fadeIn 0.5s ease;
         }
+
+        .dash-title {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .module-grid {
+            display: flex;
+            gap: 30px;
+        }
+
+        .module-card {
+            width: 300px;
+            height: 350px;
+            background: var(--card);
+            border: var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            transition: 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 40px var(--accent-glow);
+        }
+
+        .card-icon { font-size: 4rem; margin-top: 40px; }
+        .card-name { font-size: 1.5rem; font-weight: 800; color: #fff; }
+        .card-desc { font-size: 0.8rem; color: var(--text-dim); text-align: center; }
+        .card-btn {
+            background: var(--accent);
+            color: #000;
+            font-weight: 800;
+            padding: 10px 20px;
+            border-radius: 8px;
+            width: 100%;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        /* --- TRAINER VIEW (HIDDEN BY DEFAULT) --- */
+        #trainer-view {
+            display: none; /* Hidden initially */
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* NAVBAR */
+        .nav-bar {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+        .back-btn:hover { background: var(--accent); color: #000; }
+
+        /* --- TRAINER LAYOUT --- */
+        .main-container { width: 1000px; max-width: 95vw; display: flex; flex-direction: column; gap: 20px; }
 
         .lab-card { 
             background: var(--card); 
-            padding: 24px 28px; 
+            padding: 24px; 
             border-radius: 12px; 
-            border: 1px solid #27272a; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
-            position: relative;
+            border: var(--border); 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
         }
 
-        /* --- BENTO GRID STATS --- */
-        .stats-grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 12px; 
-            margin-bottom: 20px; 
-        }
+        /* BENTO GRID */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
         
         .bento-card { 
-            background: var(--glass); 
-            backdrop-filter: blur(12px); 
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border); 
+            background: #252529; /* Slightly lighter Space Gray */
+            border: var(--border); 
             border-radius: 12px; 
             padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
             position: relative;
         }
         
-        .card-hero { 
-            grid-column: span 2; 
-            grid-row: span 2; 
-            background: rgba(0,0,0,0.3); 
-            border-color: rgba(59, 130, 246, 0.3); 
-        }
-        
-        .card-settings {
-            grid-column: span 2;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-around;
-            gap: 10px;
-        }
+        .card-hero { grid-column: span 2; grid-row: span 2; background: rgba(0,0,0,0.3); border: 1px solid var(--accent-glow); }
+        .card-settings { grid-column: span 2; display: flex; flex-direction: row; gap: 10px; }
 
-        .stat-label { font-size: 0.65rem; color: #71717a; letter-spacing: 1px; margin-bottom: 4px; text-transform: uppercase; font-weight: 700; }
-        .hero-val { font-size: 3.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 30px rgba(59, 130, 246, 0.2); line-height: 1; }
+        .stat-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 4px; text-transform: uppercase; font-weight: 700; }
+        .hero-val { font-size: 3.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 30px var(--accent-glow); line-height: 1; }
         .stat-val { font-size: 1.2rem; font-weight: bold; color: #fff; }
-        .rank-badge { position: absolute; top: 15px; right: 20px; font-size: 2rem; font-weight: 900; }
-        .rank-S { color: var(--p-gold); text-shadow: 0 0 15px var(--p-gold); }
-        .rank-A { color: var(--p-blue); }
-        .rank-F { color: var(--p-red); }
 
-        /* --- GAME VIEWPORT --- */
+        /* VIEWPORT */
         .viewport { 
             height: 400px; 
-            background: linear-gradient(180deg, #050508 0%, #0a0a0f 100%);
-            border-radius: 8px; 
-            margin: 0 0 20px 0; 
-            position: relative; 
-            overflow: hidden; 
-            border: 2px solid #27272a; 
-            perspective: 1200px; 
-            perspective-origin: 50% 50%; /* Adjusted for head-level sync */
-            transition: all 0.3s ease;
+            background: linear-gradient(180deg, #0a0a0a 0%, #111 100%); /* Matte Black Gradient */
+            border-radius: 8px; margin-bottom: 20px; position: relative; overflow: hidden; 
+            border: 2px solid #333; 
+            perspective: 1000px; /* Reduced perspective for snappier feel */
         }
 
-        /* Theater Mode */
-        body.theater-mode { padding: 0; background: #000; justify-content: center; }
-        body.theater-mode .main-container { width: 100vw; max-width: none; height: 100vh; gap: 0; }
-        body.theater-mode .lab-card { display: none; } /* Hide main wrapper styling */
+        /* THEATER MODE */
+        body.theater-mode #trainer-view { padding: 0; }
+        body.theater-mode .main-container { width: 100vw; max-width: none; }
+        body.theater-mode .lab-card, body.theater-mode .nav-bar { display: none; }
         body.theater-mode .viewport { 
             width: 100vw; height: 100vh; margin: 0; border: none; border-radius: 0; 
             position: fixed; top: 0; left: 0; z-index: 999;
         }
-        body.theater-mode .hud-overlay { display: block; } /* Custom HUD for theater */
 
-        /* --- 3D WORLD --- */
+        /* WORLD */
         .world-container { position: absolute; width: 300%; height: 100%; left: -100%; top: 0; transform-style: preserve-3d; }
         .hallway { position: absolute; width: 33.33%; height: 100%; left: 33.33%; transform-style: preserve-3d; }
         
         .floor { 
             position: absolute; width: 2000px; height: 2000px; left: 50%; bottom: -600px; margin-left: -1000px; 
-            background: repeating-linear-gradient(90deg, #1a1a1f 0px, #1a1a1f 48px, #222 48px, #222 50px), 
-                        repeating-linear-gradient(0deg, #1a1a1f 0px, #1a1a1f 48px, #222 48px, #222 50px); 
+            /* Space Gray Floor Pattern */
+            background: repeating-linear-gradient(90deg, #1c1c1e 0px, #1c1c1e 48px, #333 48px, #333 50px), 
+                        repeating-linear-gradient(0deg, #1c1c1e 0px, #1c1c1e 48px, #333 48px, #333 50px); 
             transform: rotateX(85deg); 
         }
         
@@ -134,612 +195,416 @@
         .wall-left { left: -300px; transform: rotateY(80deg); }
         .wall-right { right: -300px; transform: rotateY(-80deg); background: linear-gradient(-90deg, #000, #111); }
         
-        /* Doorframe (Variable Width) */
-        .doorframe { position: absolute; width: 140px; height: 100%; left: 50%; top: 0; margin-left: -70px; z-index: 10; pointer-events: none; transition: width 0.3s, margin-left 0.3s; }
-        .door-col { position: absolute; width: 40px; height: 100%; background: #1f1f22; border: 1px solid #333; box-shadow: inset 0 0 20px #000; }
+        /* DOORFRAME */
+        .doorframe { position: absolute; width: 140px; height: 100%; left: 50%; top: 0; margin-left: -70px; z-index: 10; pointer-events: none; }
+        .door-col { position: absolute; width: 40px; height: 100%; background: #222; border: 1px solid #444; }
         
-        /* Enemy Target (Head-Level Locked) */
+        /* ENEMY */
         .enemy-target { 
-            position: absolute; 
-            top: 50%; /* LOCKED TO CROSSHAIR HEIGHT */
-            left: 50%;
-            margin-top: -30px; /* Center the head (which is roughly 20px high + neck) */
-            width: 40px; height: 80px; 
-            z-index: 5; 
-            transition: transform 0.1s, opacity 0.2s; 
+            position: absolute; top: 50%; left: 50%; margin-top: -30px; 
+            width: 40px; height: 80px; z-index: 5; 
+            transition: transform 0.05s, opacity 0.1s; /* SUPER FAST TRANSITION */
         }
         .enemy-target.dead { opacity: 0; transform: scale(0.9); }
         .enemy-head { 
             position: absolute; top: 0; left: 5px; width: 30px; height: 30px; 
-            background: #fca5a5; border-radius: 50%; border: 2px solid #ef4444;
+            background: #ef4444; border-radius: 50%; border: 2px solid #991b1b;
             box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
         }
-        .enemy-body { 
-            position: absolute; top: 32px; left: 0; width: 40px; height: 50px; 
-            background: #ef4444; border-radius: 4px; opacity: 0.6; 
-        }
+        .enemy-body { position: absolute; top: 32px; left: 0; width: 40px; height: 50px; background: #ef4444; border-radius: 4px; opacity: 0.6; }
 
-        /* --- WEAPON & HUD --- */
+        /* WEAPON */
         .weapon-container { position: absolute; bottom: 0; left: 50%; width: 200px; height: 160px; margin-left: -100px; z-index: 50; pointer-events: none; }
-        .weapon-model { position: absolute; bottom: -20px; left: 50%; margin-left: -40px; transition: transform 0.05s ease-out; }
-        .gun-body { width: 80px; height: 45px; background: #222; border-radius: 4px; border: 1px solid #444; position: relative; }
-        .gun-optic { position: absolute; top: -15px; left: 20px; width: 40px; height: 15px; background: #111; border: 1px solid var(--p-blue); box-shadow: 0 0 5px var(--p-blue); }
-        .muzzle-flash { position: absolute; top: -40px; right: -60px; width: 80px; height: 80px; background: radial-gradient(#fff, #f59e0b, transparent); border-radius: 50%; opacity: 0; transform: scale(0.5); pointer-events: none; }
-        .muzzle-flash.active { opacity: 1; transform: scale(1.5); transition: 0.05s; }
-
+        .weapon-model { position: absolute; bottom: -20px; left: 50%; margin-left: -40px; transition: transform 0.03s linear; /* ULTRA SNAP TRANSITION */ }
+        .gun-body { width: 80px; height: 45px; background: #111; border-radius: 4px; border: 1px solid #333; position: relative; }
+        .gun-optic { position: absolute; top: -15px; left: 20px; width: 40px; height: 15px; background: #000; border: 1px solid var(--accent); box-shadow: 0 0 5px var(--accent); }
+        
+        /* HUD ELEMENTS */
         .crosshair { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             width: 20px; height: 20px; z-index: 100; pointer-events: none;
             display: flex; align-items: center; justify-content: center;
         }
-        .ch-line { position: absolute; background: #0f0; }
-        .ch-h { width: 100%; height: 2px; }
-        .ch-v { width: 2px; height: 100%; }
-        .ch-dot { width: 4px; height: 4px; background: #0f0; border-radius: 50%; display: block; }
-        .crosshair.pulse { animation: chPulse 0.5s infinite; }
-        @keyframes chPulse { 0% { opacity: 1; transform:translate(-50%, -50%) scale(1); } 50% { opacity: 0.5; transform:translate(-50%, -50%) scale(1.2); } 100% { opacity: 1; transform:translate(-50%, -50%) scale(1); } }
+        .ch-line { position: absolute; background: var(--accent); }
+        .ch-h { width: 100%; height: 2px; } .ch-v { width: 2px; height: 100%; }
+        .ch-dot { width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
 
-        /* Floating HUD Keys */
         .combo-track { 
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
             z-index: 80; display: flex; gap: 10px; 
         }
         .key-node { 
-            width: 45px; height: 45px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); 
+            width: 45px; height: 45px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); 
             border-radius: 8px; display: flex; align-items: center; justify-content: center; 
-            font-size: 1.2rem; font-weight: 800; color: rgba(255,255,255,0.4); 
-            text-shadow: 0 2px 4px #000; transition: 0.1s;
+            font-size: 1.2rem; font-weight: 800; color: #555; transition: 0.05s;
         }
-        .key-node.active { opacity: 1; border-color: var(--p-blue); color: #fff; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); transform: scale(1.1); }
-        .key-node.hit { background: var(--p-blue); border-color: var(--p-blue); color: #fff; }
+        .key-node.active { opacity: 1; border-color: var(--accent); color: #fff; box-shadow: 0 0 15px var(--accent-glow); transform: scale(1.1); }
+        .key-node.hit { background: var(--accent); border-color: var(--accent); color: #000; }
 
-        .feedback-text { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); font-size: 2.5rem; font-weight: 900; opacity: 0; transition: 0.2s; z-index: 100; text-shadow: 0 4px 10px rgba(0,0,0,0.8); white-space: nowrap; }
-        .feedback-text.show { opacity: 1; top: 20%; }
-        
-        .phase-badge { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); padding: 6px 12px; background: rgba(0,0,0,0.8); border-radius: 4px; z-index: 90; font-weight: bold; font-size: 0.8rem; letter-spacing: 1px; }
-        .phase-intel { color: var(--p-gold); border: 1px solid var(--p-gold); }
-        .phase-kill { color: var(--p-red); border: 1px solid var(--p-red); }
+        /* STREAK POPUP */
+        .streak-popup {
+            position: absolute; top: 40%; left: 60%; 
+            font-size: 4rem; font-weight: 900; color: var(--accent);
+            text-shadow: 0 0 20px var(--accent);
+            opacity: 0; pointer-events: none; z-index: 200;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+        .streak-popup.pop { animation: popText 0.3s ease-out; }
+        @keyframes popText { 0% { opacity: 1; transform: scale(0.5); } 50% { transform: scale(1.2); } 100% { opacity: 0; transform: scale(1.5); } }
 
-        .theater-btn { position: absolute; top: 15px; right: 15px; z-index: 200; background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; }
-        .theater-btn:hover { background: #333; }
-
-        /* --- CONTROL PANELS --- */
+        /* CONTROLS */
         .controls-wrapper { display: flex; flex-direction: column; gap: 10px; }
-        
         .control-row { display: flex; gap: 10px; width: 100%; }
-        .glass-panel { background: var(--glass); border: 1px solid var(--border); border-radius: 8px; padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .glass-panel { background: #252529; border: 1px solid #333; border-radius: 8px; padding: 12px; flex: 1; }
         
-        .mode-select { background: #09090b; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 6px; font-family: 'Inter', sans-serif; cursor: pointer; width: 100%; }
-        
-        .slider-group { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
-        .styled-slider { flex: 1; height: 4px; background: #333; border-radius: 2px; -webkit-appearance: none; }
-        .styled-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--p-blue); border-radius: 50%; cursor: pointer; }
-        
-        .color-dots { display: flex; gap: 8px; }
-        .color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
-        .color-dot.active { border-color: #fff; transform: scale(1.1); }
+        .mode-select { background: #111; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 6px; width: 100%; }
+        .styled-slider { width: 100%; height: 4px; background: #333; border-radius: 2px; -webkit-appearance: none; margin-top: 10px; }
+        .styled-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; }
 
-        .daily-goal { width: 100%; margin-bottom: 5px; }
-        .daily-bar { width: 100%; height: 6px; background: #222; border-radius: 3px; overflow: hidden; margin-top: 5px; }
-        .daily-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--p-blue), var(--p-purple)); transition: 0.5s; }
+        .btn { background: #111; border: 1px solid #333; color: #aaa; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 700; transition: 0.2s; }
+        .btn:hover { border-color: var(--accent); color: #fff; }
+        .btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
-        /* --- MAP COMMAND CENTER --- */
-        .map-section { background: var(--card); border: 1px solid #27272a; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
-        .map-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; }
-        .map-frame-container { width: 100%; height: 600px; background: #000; border-radius: 8px; border: 2px solid #27272a; overflow: hidden; }
+        /* MAP SECTION */
+        .map-section { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .map-frame-container { width: 100%; height: 600px; background: #000; border-radius: 8px; border: 2px solid #333; overflow: hidden; }
         iframe { width: 100%; height: 100%; border: none; }
 
+        /* CONFETTI */
+        .confetti { position: absolute; width: 8px; height: 8px; background: var(--accent); animation: fall 1s linear forwards; z-index: 999; }
+        @keyframes fall { to { transform: translateY(200px) rotate(360deg); opacity: 0; } }
+        
         /* ANIMATIONS */
         .shake { animation: shake 0.1s cubic-bezier(.36,.07,.19,.97) both; }
-        .chromatic { animation: chromatic 0.2s ease-out; }
-        @keyframes shake { 0% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(5px, 5px) rotate(1deg); } 50% { transform: translate(-5px, -5px) rotate(-1deg); } 75% { transform: translate(5px, -5px) rotate(0); } 100% { transform: translate(0, 0) rotate(0); } }
-        @keyframes chromatic { 0% { filter: drop-shadow(4px 0 0 rgba(255,0,0,0.8)) drop-shadow(-4px 0 0 rgba(0,255,255,0.8)); } 100% { filter: none; } }
-        
-        .btn { background: #18181b; border: 1px solid #333; color: #aaa; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.75rem; transition: 0.2s; }
-        .btn:hover { color: #fff; border-color: #555; }
-        .btn.active { background: var(--p-blue); color: #fff; border-color: var(--p-blue); }
+        @keyframes shake { 0% { transform: translate(0, 0); } 25% { transform: translate(5px, 5px); } 75% { transform: translate(-5px, -5px); } 100% { transform: translate(0, 0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
     </style>
 </head>
 <body>
 
-<div class="main-container">
-
-    <div class="lab-card" style="padding: 15px 20px;">
-        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#888; font-weight:700;">
-            <span>DAILY GOAL: S-RANKS</span>
-            <span id="daily-text" style="color:#fff;">0/50</span>
-        </div>
-        <div class="daily-bar"><div class="daily-fill" id="daily-fill"></div></div>
-    </div>
-
-    <div class="stats-grid">
-        <div class="bento-card card-hero">
-            <span class="stat-label">LAST PEEK</span>
-            <span class="hero-val" id="time-display">0<span style="font-size:1.5rem; color:#666">ms</span></span>
-            <div class="rank-badge" id="rank-badge">-</div>
-            <div style="font-size:0.75rem; color:var(--p-green); margin-top:5px; font-weight:700">AVG: <span id="avg-disp">0ms</span></div>
-        </div>
-        
-        <div class="bento-card">
-            <span class="stat-label">STREAK</span>
-            <span class="stat-val" id="streak-disp">0</span>
-        </div>
-        
-        <div class="bento-card">
-            <span class="stat-label">ACCURACY</span>
-            <span class="stat-val" id="acc-disp">0%</span>
-        </div>
-        
-        <div class="bento-card card-settings">
-            <div style="flex:1">
-                <span class="stat-label">CROSSHAIR COLOR</span>
-                <div class="color-dots" style="margin-top:8px;">
-                    <div class="color-dot active" style="background:#0f0" onclick="setCHColor('#0f0', this)"></div>
-                    <div class="color-dot" style="background:#0ff" onclick="setCHColor('#0ff', this)"></div>
-                    <div class="color-dot" style="background:#f00" onclick="setCHColor('#f00', this)"></div>
-                    <div class="color-dot" style="background:#fff" onclick="setCHColor('#fff', this)"></div>
-                </div>
+    <div id="dashboard-view">
+        <div class="dash-title">R6 COACH PRO</div>
+        <div class="module-grid">
+            <div class="module-card" onclick="enterTrainer()">
+                <div class="card-icon">🎯</div>
+                <div class="card-name">PEEK TRAINER</div>
+                <div class="card-desc">Master the Shaiiko mechanical rhythm. Intel gathering, pre-fire timing, and counter-strafing.</div>
+                <div class="card-btn">ENTER SIMULATION</div>
             </div>
-            <div style="flex:1">
-                <span class="stat-label">OPACITY</span>
-                <input type="range" class="styled-slider" min="0.1" max="1" step="0.1" value="1" oninput="setCHOpacity(this.value)">
-                <div style="margin-top:8px;">
-                    <label style="font-size:0.7rem; color:#aaa; display:flex; align-items:center; gap:5px;">
-                        <input type="checkbox" checked onchange="toggleCHDot(this.checked)"> CENTER DOT
-                    </label>
-                </div>
+            <div class="module-card" onclick="enterTrainer(true)">
+                <div class="card-icon">🗺️</div>
+                <div class="card-name">STRAT BOARD</div>
+                <div class="card-desc">Interactive strategy board linked to R6Calls. Study callouts and setups.</div>
+                <div class="card-btn">OPEN MAPS</div>
             </div>
         </div>
     </div>
 
-    <div class="viewport" id="viewport">
-        <button class="theater-btn" onclick="toggleFullscreen()">⛶ THEATER</button>
-        <div class="feedback-text" id="feedback-text">READY</div>
-        <div class="phase-badge phase-intel" id="phase-badge">PHASE 1: INTEL</div>
-        
-        <div class="crosshair" id="crosshair">
-            <div class="ch-line ch-h"></div>
-            <div class="ch-line ch-v"></div>
-            <div class="ch-dot" id="ch-dot"></div>
+    <div id="trainer-view">
+        <div class="nav-bar">
+            <div style="font-weight:900; font-size:1.2rem; color:#fff;">FOCUS LAB <span style="color:var(--accent)">V3.0</span></div>
+            <button class="back-btn" onclick="exitTrainer()">← DASHBOARD</button>
         </div>
 
-        <div class="combo-track">
-            <div id="k0" class="key-node">A</div>
-            <div id="k1" class="key-node">D</div>
-            <div id="k2" class="key-node">E</div>
-            <div id="k3" class="key-node">Q</div>
-        </div>
+        <div class="main-container">
 
-        <div class="world-container" id="world">
-            <div class="hallway">
-                <div class="floor"></div>
-                <div class="wall wall-left"></div>
-                <div class="wall wall-right"></div>
+            <div class="stats-grid">
+                <div class="bento-card card-hero">
+                    <span class="stat-label">LAST PEEK</span>
+                    <span class="hero-val" id="time-display">0<span style="font-size:1.5rem; color:#666">ms</span></span>
+                    <div style="font-size:0.75rem; color:var(--accent); margin-top:5px; font-weight:700">AVG: <span id="avg-disp">0ms</span></div>
+                </div>
+                <div class="bento-card">
+                    <span class="stat-label">STREAK</span>
+                    <span class="stat-val" id="streak-disp" style="color:var(--accent); font-size:2rem;">0</span>
+                </div>
+                <div class="bento-card">
+                    <span class="stat-label">ACCURACY</span>
+                    <span class="stat-val" id="acc-disp">0%</span>
+                </div>
+                <div class="bento-card card-settings">
+                    <div style="flex:1">
+                         <span class="stat-label">CROSSHAIR</span>
+                         <div style="display:flex; gap:5px; margin-top:5px;">
+                             <div style="width:15px; height:15px; background:#38bdf8; border-radius:50%; cursor:pointer;" onclick="setCHColor('#38bdf8')"></div>
+                             <div style="width:15px; height:15px; background:#ef4444; border-radius:50%; cursor:pointer;" onclick="setCHColor('#ef4444')"></div>
+                             <div style="width:15px; height:15px; background:#22c55e; border-radius:50%; cursor:pointer;" onclick="setCHColor('#22c55e')"></div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="viewport" id="viewport">
+                <button class="theater-btn" onclick="toggleFullscreen()">⛶ THEATER</button>
+                <div class="feedback-text" id="feedback-text">READY</div>
+                <div class="streak-popup" id="streak-pop">+1</div>
                 
-                <div class="doorframe" id="doorframe">
-                    <div class="door-col" style="left:0"></div>
-                    <div class="door-col" style="right:0"></div>
+                <div class="crosshair" id="crosshair">
+                    <div class="ch-line ch-h"></div>
+                    <div class="ch-line ch-v"></div>
+                    <div class="ch-dot" id="ch-dot"></div>
                 </div>
 
-                <div class="enemy-target" id="enemy">
-                    <div class="enemy-head"></div>
-                    <div class="enemy-body"></div>
+                <div class="combo-track" id="keys-display">
+                    <div id="k0" class="key-node">A</div>
+                    <div id="k1" class="key-node">D</div>
+                    <div id="k2" class="key-node">E</div>
+                    <div id="k3" class="key-node">Q</div>
+                </div>
+
+                <div class="world-container" id="world">
+                    <div class="hallway">
+                        <div class="floor"></div><div class="wall wall-left"></div><div class="wall wall-right"></div>
+                        <div class="doorframe" id="doorframe">
+                            <div class="door-col" style="left:0"></div><div class="door-col" style="right:0"></div>
+                        </div>
+                        <div class="enemy-target" id="enemy">
+                            <div class="enemy-head"></div><div class="enemy-body"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="weapon-container">
+                    <div class="weapon-model" id="weapon">
+                        <div class="gun-body"><div class="gun-optic"></div></div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="weapon-container">
-            <div class="weapon-model" id="weapon">
-                <div class="gun-body">
-                    <div class="gun-optic"></div>
-                    <div class="muzzle-flash" id="muzzle-flash"></div>
+            <div class="controls-wrapper">
+                <div class="control-row">
+                    <div class="glass-panel" style="flex:1">
+                        <span class="stat-label">MODE</span>
+                        <select class="mode-select" style="margin-top:5px;" onchange="setMode(this.value)">
+                            <option value="full">FULL DRILL</option>
+                            <option value="intel">INTEL ONLY</option>
+                            <option value="kill">KILL ONLY</option>
+                        </select>
+                    </div>
+                    <div class="glass-panel" style="flex:2">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span class="stat-label">SPEED (BPM)</span>
+                            <span class="stat-label" style="color:var(--accent)" id="bpm-val">120</span>
+                        </div>
+                        <input type="range" class="styled-slider" min="60" max="220" step="5" value="120" oninput="setBPM(this.value)">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <button class="btn" style="flex:1" onclick="swapSide()">🔁 SWAP PEEK (RIGHT)</button>
+                    <button class="btn" style="flex:1" onclick="toggleMusic()" id="music-btn">🎵 PHONK: OFF</button>
+                    <button class="btn" style="flex:1" onclick="resetStats()">🗑️ RESET</button>
+                </div>
+            </div>
+
+            <div class="map-section" id="map-section">
+                <div class="map-header" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span class="stat-label" style="font-size:1rem; color:#fff;">STRATEGY BOARD</span>
+                    <select class="mode-select" style="width:auto;" onchange="loadMap(this.value)">
+                        <option value="oregon">OREGON</option>
+                        <option value="clubhouse">CLUBHOUSE</option>
+                        <option value="coastline">COASTLINE</option>
+                    </select>
+                </div>
+                <div class="map-frame-container">
+                    <iframe id="r6-frame" src="" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="controls-wrapper">
-        <div class="control-row">
-            <div class="glass-panel" style="flex:1.5">
-                <span class="stat-label">GAME MODE</span>
-                <select class="mode-select" style="margin-top:5px;" onchange="setMode(this.value)">
-                    <option value="full">FULL DRILL (INTEL + KILL)</option>
-                    <option value="intel">INTEL ONLY</option>
-                    <option value="kill">KILL ONLY</option>
-                    <option value="alt">ALTERNATING SIDES</option>
-                </select>
-            </div>
+    <script>
+        // --- NAVIGATION ---
+        function enterTrainer(scrollToMaps = false) {
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('trainer-view').style.display = 'flex';
+            if(scrollToMaps) {
+                setTimeout(() => document.getElementById('map-section').scrollIntoView({behavior:'smooth'}), 100);
+            }
+        }
+        function exitTrainer() {
+            document.getElementById('dashboard-view').style.display = 'flex';
+            document.getElementById('trainer-view').style.display = 'none';
+        }
+
+        // --- CONFIG ---
+        const SEQS = { 'ADEQ': ['a','d','e','q'], 'DAQE': ['d','a','q','e'] };
+        let currentSide = 'ADEQ';
+        let idx = 0;
+        let startTime = 0;
+        let streak = 0;
+        let attempts = 0;
+        let sRanks = 0;
+        let bpm = 120;
+        
+        // --- ANIMATION ENGINE (UPDATED FOR SPEED) ---
+        let cx=0, tx=0, cLean=0, tLean=0;
+        // LERP FACTOR: Increased to 0.4 for SNAPPY, FAST animations
+        const LERP_SPEED = 0.4; 
+
+        function loop() {
+            cx += (tx - cx) * LERP_SPEED;
+            cLean += (tLean - cLean) * LERP_SPEED;
             
-            <div class="glass-panel" style="flex:2">
-                <div style="display:flex; justify-content:space-between;">
-                    <span class="stat-label">DIFFICULTY BPM</span>
-                    <span class="stat-label" style="color:var(--p-blue)" id="bpm-val">120</span>
-                </div>
-                <input type="range" class="styled-slider" style="margin-top:10px;" min="60" max="220" step="5" value="120" oninput="setBPM(this.value)">
-            </div>
+            document.getElementById('world').style.transform = `translateX(${cx}px)`;
+            document.getElementById('weapon').style.transform = `translateX(${cLean * 20}px) rotateZ(${cLean * 15}deg)`;
+            requestAnimationFrame(loop);
+        }
+        loop();
+
+        // --- INPUT LOGIC ---
+        window.addEventListener('keydown', e => {
+            if(document.getElementById('dashboard-view').style.display !== 'none') return; // Don't run on dashboard
             
-            <div class="glass-panel" style="flex:1.5">
-                <div style="display:flex; justify-content:space-between;">
-                    <span class="stat-label">SLIVER DRILL (WIDTH)</span>
-                    <span class="stat-label" id="width-val">Normal</span>
-                </div>
-                <input type="range" class="styled-slider" style="margin-top:10px;" min="60" max="200" value="140" oninput="setDoorWidth(this.value)">
-            </div>
-        </div>
+            const k = e.key.toLowerCase();
+            const seq = SEQS[currentSide];
 
-        <div class="control-row">
-            <button class="btn active" id="music-btn" style="flex:1" onclick="toggleMusic()">🎵 BEAT SYNC: OFF</button>
-            <button class="btn" style="flex:1" onclick="swapSide()">🔁 SWAP SIDE (RIGHT)</button>
-            <button class="btn" style="flex:1" onclick="resetStats()">🗑️ RESET STATS</button>
-        </div>
-    </div>
+            if(k === seq[idx]) {
+                if(idx===0) { startTime = performance.now(); document.getElementById('k0').classList.add('active'); }
+                
+                // Key Visuals
+                document.getElementById('k'+idx).classList.add('hit');
+                
+                // Fast Movement Logic
+                if(currentSide === 'ADEQ') {
+                    if(idx===0) tx = 80;
+                    if(idx===1) tx = -60;
+                    if(idx===2) { tx = -80; tLean = 1; }
+                    if(idx===3) { tx = -40; tLean = -0.2; }
+                } else {
+                    if(idx===0) tx = -80;
+                    if(idx===1) tx = 60;
+                    if(idx===2) { tx = 80; tLean = -1; }
+                    if(idx===3) { tx = 40; tLean = 0.2; }
+                }
 
-    <div class="map-section">
-        <div class="map-header">
-            <span class="stat-label" style="font-size:1rem; color:#fff;">STRATEGY BOARD</span>
-            <div style="display:flex; gap:10px;">
-                <select class="mode-select" style="width:auto;" onchange="loadMap(this.value)">
-                    <option value="oregon">OREGON</option>
-                    <option value="clubhouse">CLUBHOUSE</option>
-                    <option value="coastline">COASTLINE</option>
-                    <option value="bank">BANK</option>
-                    <option value="chalet">CHALET</option>
-                    <option value="kafe">KAFE</option>
-                    <option value="consulate">CONSULATE</option>
-                    <option value="border">BORDER</option>
-                </select>
-                <a id="popout-link" href="#" target="_blank" class="btn">↗ OPEN IN NEW TAB</a>
-            </div>
-        </div>
-        <div class="map-frame-container">
-            <iframe id="r6-frame" src="" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
-        </div>
-    </div>
+                idx++;
+                if(idx===4) finish();
+            } else if(['a','d','e','q'].includes(k)) {
+                fail();
+            }
+        });
 
-</div>
+        function finish() {
+            const total = performance.now() - startTime;
+            const target = (60000/bpm) * 3; // 3 beats for sequence
+            
+            // Recoil Kick
+            document.getElementById('weapon').style.transform += ` translateY(20px)`; 
+            
+            // Visuals
+            document.getElementById('enemy').classList.add('dead');
+            
+            let rank = 'D';
+            if(total < target * 0.85) rank = 'S';
+            else if(total < target) rank = 'A';
 
-<script>
-    // === CONFIGURATION ===
-    const SEQS = { 'ADEQ': ['a','d','e','q'], 'DAQE': ['d','a','q','e'] };
-    let currentSide = 'ADEQ';
-    let trainingType = 'full';
-    let idx = 0;
-    let phase = 'intel';
-    let startTime = 0;
-    let keyTimes = [];
-    
-    // Stats
-    let allTimes = [];
-    let sRanks = 0;
-    let attempts = 0;
-    let streak = 0;
+            updateStats(total, rank);
+            setTimeout(resetRound, 100); // Super fast reset (100ms)
+        }
 
-    // Settings (Persisted)
-    let bpm = 120;
-    let doorWidth = 140;
-    
-    // Audio Engine
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let musicInterval = null;
-    let beatStep = 0;
-    let musicActive = false;
+        function fail() {
+            streak = 0;
+            document.getElementById('streak-disp').innerText = 0;
+            document.getElementById('viewport').style.boxShadow = "inset 0 0 50px rgba(239, 68, 68, 0.5)";
+            setTimeout(() => document.getElementById('viewport').style.boxShadow = "none", 200);
+            resetRound();
+        }
 
-    // === INIT & PERSISTENCE ===
-    window.onload = () => {
-        loadSettings();
+        function resetRound() {
+            idx = 0; tx = 0; tLean = 0;
+            document.querySelectorAll('.key-node').forEach(k => {
+                k.classList.remove('hit'); 
+                k.classList.remove('active');
+            });
+            document.getElementById('enemy').classList.remove('dead');
+            randomizeTarget();
+        }
+
+        function randomizeTarget() {
+            const offset = (Math.random() * 60) - 30;
+            const base = currentSide === 'ADEQ' ? 'calc(50% + 70px)' : 'calc(50% - 110px)';
+            const el = document.getElementById('enemy');
+            el.style.left = base;
+            el.style.transform = `translateX(${offset}px)`;
+        }
+
+        // --- DAQE FIX & SIDE SWAP ---
+        function swapSide() {
+            currentSide = currentSide === 'ADEQ' ? 'DAQE' : 'ADEQ';
+            const btn = document.querySelector('button[onclick="swapSide()"]');
+            
+            // FIX: Update inner text of keys immediately
+            const k0 = document.getElementById('k0');
+            const k1 = document.getElementById('k1');
+            const k2 = document.getElementById('k2'); // E or Q
+            const k3 = document.getElementById('k3'); // Q or E
+
+            if(currentSide === 'ADEQ') {
+                k0.innerText = 'A'; k1.innerText = 'D'; k2.innerText = 'E'; k3.innerText = 'Q';
+                btn.innerText = "🔁 SWAP PEEK (RIGHT)";
+            } else {
+                k0.innerText = 'D'; k1.innerText = 'A'; k2.innerText = 'Q'; k3.innerText = 'E';
+                btn.innerText = "🔁 SWAP PEEK (LEFT)";
+            }
+            resetRound();
+        }
+
+        // --- STREAK & CONFETTI ---
+        function updateStats(ms, rank) {
+            attempts++;
+            if(rank === 'S') {
+                streak++;
+                triggerPopup("+" + streak);
+                if(streak === 10) fireConfetti();
+                if(streak > 0 && streak % 10 === 0) fireConfetti();
+            } else {
+                streak = 0;
+            }
+            
+            document.getElementById('time-display').innerHTML = Math.round(ms) + '<span style="font-size:1.5rem; color:#666">ms</span>';
+            document.getElementById('streak-disp').innerText = streak;
+            document.getElementById('acc-disp').innerText = Math.round((sRanks/attempts)*100) + "%";
+        }
+
+        function triggerPopup(text) {
+            const el = document.getElementById('streak-pop');
+            el.innerText = text;
+            el.classList.remove('pop');
+            void el.offsetWidth; // trigger reflow
+            el.classList.add('pop');
+        }
+
+        function fireConfetti() {
+            triggerPopup("CONFIDENCE!");
+            for(let i=0; i<20; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + "%";
+                c.style.backgroundColor = ['#38bdf8', '#fbbf24', '#fff'][Math.floor(Math.random()*3)];
+                document.getElementById('viewport').appendChild(c);
+                setTimeout(() => c.remove(), 1000);
+            }
+        }
+
+        // --- SETTINGS ---
+        function setBPM(val) { bpm = val; document.getElementById('bpm-val').innerText = val; }
+        function setCHColor(c) { 
+            document.querySelectorAll('.ch-line').forEach(l => l.style.background = c);
+            document.getElementById('ch-dot').style.background = c;
+        }
+        function toggleFullscreen() {
+            if(!document.fullscreenElement) { document.body.requestFullscreen(); document.body.classList.add('theater-mode'); }
+            else { document.exitFullscreen(); document.body.classList.remove('theater-mode'); }
+        }
+        
+        // --- MAPS ---
+        const MAP_LINKS = { 'oregon': 'https://r6calls.com/maps/oregon', 'clubhouse': 'https://r6calls.com/maps/clubhouse', 'coastline': 'https://r6calls.com/maps/coastline' };
+        function loadMap(map) { document.getElementById('r6-frame').src = MAP_LINKS[map] || MAP_LINKS['oregon']; }
+
+        // Init
         loadMap('oregon');
         randomizeTarget();
-        updateHUD();
-    };
-
-    function loadSettings() {
-        if(localStorage.getItem('r6_bpm')) setBPM(localStorage.getItem('r6_bpm'));
-        if(localStorage.getItem('r6_width')) setDoorWidth(localStorage.getItem('r6_width'));
-        if(localStorage.getItem('r6_ch_color')) setCHColor(localStorage.getItem('r6_ch_color'));
-    }
-
-    // === GAME LOOP & PHYSICS ===
-    let cx = 0, tx = 0, cLean = 0, tLean = 0, cRecoil = 0, tRecoil = 0;
-    
-    function loop() {
-        // Smooth Movement
-        cx += (tx - cx) * 0.15;
-        cLean += (tLean - cLean) * 0.15;
-        cRecoil += (tRecoil - cRecoil) * 0.1;
-        
-        // Decay Recoil
-        tRecoil *= 0.9; 
-        
-        // Apply Transforms
-        document.getElementById('world').style.transform = `translateX(${cx}px)`;
-        // Weapon: Lean + Recoil
-        document.getElementById('weapon').style.transform = `translateX(${cLean * 20}px) translateY(${-cRecoil}px) rotateZ(${cLean * 15 - (cRecoil/5)}deg)`;
-        
-        requestAnimationFrame(loop);
-    }
-    loop();
-
-    // === INPUT LOGIC ===
-    window.addEventListener('keydown', e => {
-        const k = e.key.toLowerCase();
-        if(k === ' ') { e.preventDefault(); swapSide(); return; }
-        if(k === 'r') { resetStats(); return; }
-
-        const seq = SEQS[currentSide];
-        if(k === seq[idx]) {
-            // Step 1: Start
-            if(idx===0) { startTime = performance.now(); keyTimes = [startTime]; document.getElementById('k0').classList.add('active'); }
-            else keyTimes.push(performance.now());
-            
-            playSFX('click');
-            document.getElementById('k'+idx).classList.add('hit');
-
-            // Movement Logic (A-D-E-Q)
-            if(currentSide === 'ADEQ') { // Right Peek
-                if(idx===0) tx = 80;
-                if(idx===1) tx = -60;
-                if(idx===2) { tx = -80; tLean = 1; }
-                if(idx===3) { tx = -40; tLean = -0.2; }
-            } else { // Left Peek
-                if(idx===0) tx = -80;
-                if(idx===1) tx = 60;
-                if(idx===2) { tx = 80; tLean = -1; }
-                if(idx===3) { tx = 40; tLean = 0.2; }
-            }
-
-            idx++;
-            if(idx===4) finishSequence();
-            
-        } else if (['a','d','e','q'].includes(k)) {
-            fail("MISS");
-        }
-    });
-
-    function finishSequence() {
-        const total = performance.now() - startTime;
-        
-        if(phase === 'intel') {
-            document.getElementById('feedback-text').innerText = "SPOTTED";
-            document.getElementById('feedback-text').className = "feedback-text show";
-            playSFX('success');
-            
-            if(trainingType === 'full' || trainingType === 'alt') {
-                setPhase('kill');
-            }
-            // Intel doesn't count for rank, just practice
-        } else {
-            // Kill Phase
-            tRecoil = 50 + (bpm/4); // Recoil Kick based on BPM
-            document.getElementById('muzzle-flash').classList.add('active');
-            document.getElementById('enemy').classList.add('dead');
-            playSFX('shoot');
-            
-            const target = (60000/bpm) * 3;
-            let rank = total < target*0.85 ? 'S' : (total < target ? 'A' : 'D');
-            
-            const fb = document.getElementById('feedback-text');
-            fb.innerText = rank==='S'?"GODLIKE":"CLEAN";
-            fb.style.color = rank==='S'?"var(--p-gold)":"#fff";
-            fb.className = "feedback-text show";
-            
-            if(rank==='S') {
-                document.getElementById('viewport').classList.add('shake');
-                sRanks++;
-                playSFX('success');
-            }
-            
-            updateStats(total, rank);
-            
-            if(trainingType === 'full' || trainingType === 'alt') {
-                setPhase('intel');
-                if(trainingType === 'alt') swapSide();
-            }
-        }
-        
-        setTimeout(resetRound, 150);
-    }
-
-    function fail(reason) {
-        document.getElementById('viewport').classList.add('chromatic');
-        const fb = document.getElementById('feedback-text');
-        fb.innerText = reason; fb.style.color = "var(--p-red)"; fb.className = "feedback-text show";
-        playSFX('fail');
-        streak = 0;
-        updateHUD();
-        setTimeout(resetRound, 200);
-    }
-
-    function resetRound() {
-        idx = 0; tx = 0; tLean = 0;
-        document.querySelectorAll('.key-node').forEach(k => k.className = 'key-node');
-        document.getElementById('muzzle-flash').classList.remove('active');
-        document.getElementById('viewport').classList.remove('shake');
-        document.getElementById('viewport').classList.remove('chromatic');
-        document.getElementById('feedback-text').className = "feedback-text";
-        randomizeTarget();
-    }
-
-    // === TARGET & PHYSICS ===
-    function randomizeTarget() {
-        // Only move Horizontal. Vertical is LOCKED to CSS top:50%
-        const offset = (Math.random() * 60) - 30;
-        const base = currentSide === 'ADEQ' ? 'calc(50% + 70px)' : 'calc(50% - 110px)';
-        const el = document.getElementById('enemy');
-        el.style.left = base;
-        el.style.transform = `translateX(${offset}px)`;
-        el.classList.remove('dead');
-    }
-
-    // === AUDIO ENGINE (PROCEDURAL PHONK) ===
-    function playSFX(type) {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        
-        if(type==='click') { osc.type='triangle'; osc.frequency.value=800; gain.gain.value=0.1; osc.start(); osc.stop(audioCtx.currentTime+0.05); }
-        if(type==='shoot') { osc.type='sawtooth'; osc.frequency.value=100; gain.gain.value=0.2; osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime+0.1); osc.start(); osc.stop(audioCtx.currentTime+0.1); }
-        if(type==='success') { osc.type='sine'; osc.frequency.value=1200; gain.gain.value=0.2; osc.start(); osc.stop(audioCtx.currentTime+0.2); }
-        if(type==='fail') { osc.type='square'; osc.frequency.value=150; gain.gain.value=0.2; osc.start(); osc.stop(audioCtx.currentTime+0.2); }
-    }
-
-    function toggleMusic() {
-        const btn = document.getElementById('music-btn');
-        if(musicActive) {
-            clearInterval(musicInterval); musicActive=false;
-            btn.innerText = "🎵 BEAT SYNC: OFF"; btn.classList.remove('active');
-        } else {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            musicActive = true;
-            btn.innerText = "🎵 BEAT SYNC: ON"; btn.classList.add('active');
-            playBeat();
-        }
-    }
-
-    function playBeat() {
-        if(!musicActive) return;
-        const interval = 60000 / bpm;
-        clearInterval(musicInterval);
-        
-        let step = 0;
-        musicInterval = setInterval(() => {
-            // Kick on 1, Snare on 3
-            if(step % 4 === 0) playDrum('kick');
-            if(step % 4 === 2) playDrum('snare');
-            playDrum('hihat');
-            step++;
-        }, interval / 4); // 16th notes
-    }
-
-    function playDrum(type) {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        
-        const t = audioCtx.currentTime;
-        if(type==='kick') {
-            osc.frequency.setValueAtTime(150, t);
-            osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.5);
-            gain.gain.setValueAtTime(0.5, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-            osc.start(t); osc.stop(t + 0.5);
-        } else if(type==='snare') {
-            osc.type = 'triangle';
-            gain.gain.setValueAtTime(0.2, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-            osc.start(t); osc.stop(t + 0.2);
-        } else { // Hihat
-            osc.type = 'square';
-            osc.frequency.value = 8000;
-            gain.gain.value = 0.05;
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-            osc.start(t); osc.stop(t + 0.05);
-        }
-    }
-
-    // === SETTINGS & UI ===
-    function setBPM(val) {
-        bpm = val;
-        document.getElementById('bpm-val').innerText = val;
-        localStorage.setItem('r6_bpm', val);
-        if(musicActive) playBeat(); // Restart music at new speed
-    }
-
-    function setDoorWidth(val) {
-        doorWidth = val;
-        document.getElementById('doorframe').style.width = val + 'px';
-        document.getElementById('doorframe').style.marginLeft = -(val/2) + 'px';
-        document.getElementById('width-val').innerText = val < 100 ? "PIXEL" : (val > 160 ? "WIDE" : "NORMAL");
-        localStorage.setItem('r6_width', val);
-    }
-
-    function setCHColor(c, el) {
-        document.querySelectorAll('.ch-line').forEach(l => l.style.background = c);
-        document.getElementById('ch-dot').style.background = c;
-        localStorage.setItem('r6_ch_color', c);
-        if(el) {
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-            el.classList.add('active');
-        }
-    }
-    
-    function setCHOpacity(val) { document.getElementById('crosshair').style.opacity = val; }
-    function toggleCHDot(on) { document.getElementById('ch-dot').style.display = on ? 'block' : 'none'; }
-
-    function setPhase(p) {
-        phase = p;
-        const pb = document.getElementById('phase-badge');
-        pb.innerText = p==='kill' ? "PHASE 2: KILL" : "PHASE 1: INTEL";
-        pb.className = p==='kill' ? "phase-badge phase-kill" : "phase-badge phase-intel";
-    }
-
-    function updateStats(ms, rank) {
-        attempts++;
-        if(rank === 'S') streak++; else if(rank === 'F' || rank === 'D') streak = 0;
-        
-        allTimes.push(ms);
-        if(allTimes.length > 50) allTimes.shift();
-        
-        const avg = Math.round(allTimes.reduce((a,b)=>a+b)/allTimes.length);
-        
-        document.getElementById('time-display').innerHTML = Math.round(ms) + '<span style="font-size:1.5rem; color:#666">ms</span>';
-        document.getElementById('rank-badge').innerText = rank;
-        document.getElementById('rank-badge').className = `rank-badge rank-${rank}`;
-        document.getElementById('avg-disp').innerText = avg + "ms";
-        document.getElementById('streak-disp').innerText = streak;
-        document.getElementById('acc-disp').innerText = Math.round((sRanks/attempts)*100) + "%";
-        document.getElementById('daily-text').innerText = sRanks + "/50";
-        document.getElementById('daily-fill').style.width = Math.min(100, (sRanks/50)*100) + "%";
-        
-        // Key Splits (Approximate for display)
-        if(keyTimes.length === 4) {
-            document.getElementById('split-1').innerText = Math.round(keyTimes[1]-keyTimes[0]);
-            document.getElementById('split-2').innerText = Math.round(keyTimes[2]-keyTimes[1]);
-            document.getElementById('split-3').innerText = Math.round(keyTimes[3]-keyTimes[2]);
-        }
-    }
-
-    function swapSide() {
-        currentSide = currentSide === 'ADEQ' ? 'DAQE' : 'ADEQ';
-        const k = document.querySelectorAll('.key-node');
-        const btn = document.querySelector('button[onclick="swapSide()"]');
-        if(currentSide === 'ADEQ') {
-            k[0].innerText='A'; k[1].innerText='D'; k[3].innerText='Q';
-            btn.innerText = "🔁 SWAP SIDE (RIGHT)";
-        } else {
-            k[0].innerText='D'; k[1].innerText='A'; k[3].innerText='E';
-            btn.innerText = "🔁 SWAP SIDE (LEFT)";
-        }
-        resetRound();
-    }
-
-    function resetStats() {
-        sRanks = 0; streak = 0; attempts = 0; allTimes = [];
-        updateStats(0, '-');
-    }
-
-    function toggleFullscreen() {
-        if(!document.fullscreenElement) { document.body.requestFullscreen(); document.body.classList.add('theater-mode'); }
-        else { document.exitFullscreen(); document.body.classList.remove('theater-mode'); }
-    }
-
-    // === MAP LOGIC ===
-    const MAP_LINKS = {
-        'oregon': 'https://r6calls.com/maps/oregon',
-        'clubhouse': 'https://r6calls.com/maps/clubhouse',
-        'coastline': 'https://r6calls.com/maps/coastline',
-        'consulate': 'https://r6calls.com/maps/consulate',
-        'bank': 'https://r6calls.com/maps/bank',
-        'chalet': 'https://r6calls.com/maps/chalet',
-        'kafe': 'https://r6calls.com/maps/kafe-dostoyevsky',
-        'border': 'https://r6calls.com/maps/border'
-    };
-    function loadMap(map) {
-        const url = MAP_LINKS[map] || MAP_LINKS['oregon'];
-        document.getElementById('r6-frame').src = url;
-        document.getElementById('popout-link').href = url;
-    }
-
-</script>
+    </script>
 </body>
 </html>
