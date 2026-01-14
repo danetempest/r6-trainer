@@ -117,14 +117,14 @@
         .val { font-size: 2rem; font-weight: 900; color: #fff; }
         #score-disp { color: var(--accent); }
 
-        /* SETTINGS PANEL (Hidden by default during play) */
+        /* SETTINGS PANEL */
         #settings-panel {
             position: absolute; top: 50%; left: 50%; 
             transform: translate(-50%, -50%);
             background: rgba(9, 9, 11, 0.95); padding: 30px;
             border-radius: 12px; border: 1px solid #333;
             z-index: 400; width: 300px;
-            display: none; /* Controlled by Tab/Pause */
+            display: none; 
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
         }
         .panel-title { text-align: center; font-size: 1.5rem; color: #fff; font-weight: 800; margin-bottom: 20px; }
@@ -133,7 +133,6 @@
         input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
         .checkbox-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #fff; margin-bottom: 5px; }
         
-        /* OVERLAYS */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(9, 9, 11, 0.95);
@@ -189,7 +188,7 @@
         </div>
         <div class="checkbox-row">
             <input type="checkbox" id="invert-y" checked onchange="toggleInvert(this.checked)">
-            <label for="invert-y">Invert Y-Axis (FPS Standard)</label>
+            <label for="invert-y">Standard Look (Up = Look Up)</label>
         </div>
         <div class="checkbox-row">
             <input type="checkbox" id="moving-targets" onchange="toggleMotion(this.checked)">
@@ -241,13 +240,11 @@
         
         let sensX = 1.0;
         let sensY = 1.0;
-        // Default Invert Y is TRUE now
-        let invertY = true; 
+        let invertY = true; // Checked by default (Standard FPS)
         let strafing = false;
 
         viewport.requestPointerLock = viewport.requestPointerLock || viewport.mozRequestPointerLock;
 
-        // --- INPUT HANDLING ---
         function updateSens(axis, val) {
             if (axis === 'h') { sensX = parseFloat(val); document.getElementById('h-val').innerText = val; }
             if (axis === 'v') { sensY = parseFloat(val); document.getElementById('v-val').innerText = val; }
@@ -256,10 +253,9 @@
         function toggleInvert(checked) { invertY = checked; }
         function toggleMotion(checked) { strafing = checked; }
 
-        // --- TAB KEY LISTENER ---
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
-                e.preventDefault(); // Stop tab switching
+                e.preventDefault(); 
                 if (isRunning) {
                     if (isPaused) resumeGame();
                     else pauseGame();
@@ -267,7 +263,6 @@
             }
         });
 
-        // --- GAME LOOP ---
         function initGame() {
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'none';
@@ -294,7 +289,6 @@
             document.addEventListener("mousemove", handleMouse, false);
             document.addEventListener("mousedown", handleShoot, false);
             
-            // Timer Loop
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 if(!isRunning || isPaused) return;
@@ -303,7 +297,6 @@
                 if(timeLeft <= 0) endGame();
             }, 1000);
 
-            // Motion Loop
             if (motionInterval) clearInterval(motionInterval);
             motionInterval = setInterval(() => {
                 if(isRunning && !isPaused && strafing) updateTargets();
@@ -322,8 +315,6 @@
             viewport.requestPointerLock();
         }
 
-        // --- POINTER LOCK MONITOR ---
-        // If user presses ESC, we treat it as a Pause
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement !== viewport && isRunning && !isPaused) {
                 pauseGame();
@@ -351,20 +342,18 @@
         function handleMouse(e) {
             if (!isRunning || isPaused) return;
             
-            camYaw -= e.movementX * (sensX * 0.1); 
+            // X-AXIS (YAW) - INVERTED to feel natural (Mouse Right -> Look Right)
+            camYaw += e.movementX * (sensX * 0.1); 
+
+            // Y-AXIS (PITCH)
             let moveY = e.movementY * (sensY * 0.1);
             
-            // Standard FPS Style now default (invertY is true by default in vars)
-            // Logic: If invertY is ON, we ADD to pitch (Up is Up).
-            // Note: My previous logic was inverted naming. Let's fix for clarity:
-            // Standard Gaming (Up moves view up) -> Subtract Y
-            // Inverted Gaming (Up moves view down) -> Add Y
-            // Siege Default is Standard.
-            
             if(invertY) {
-                camPitch -= moveY; // Standard FPS (Mouse Up = Look Up)
+                // Standard FPS (Mouse Up -> Pitch decreases/Up)
+                camPitch -= moveY; 
             } else {
-                camPitch += moveY; // Flight Sim (Mouse Up = Look Down)
+                // Inverted Flight Sim (Mouse Up -> Pitch increases/Down)
+                camPitch += moveY; 
             }
 
             camPitch = Math.max(-85, Math.min(85, camPitch));
