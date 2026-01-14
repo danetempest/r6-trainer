@@ -21,24 +21,21 @@
             user-select: none;
         }
 
-        /* --- 3D ENGINE STYLES --- */
+        /* --- 3D ENGINE --- */
         #viewport {
             width: 100vw; height: 100vh;
-            perspective: 600px; /* Field of View */
+            perspective: 600px;
             overflow: hidden;
             background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
-            cursor: none; /* Hide standard cursor */
+            cursor: none; 
         }
 
         #world {
-            position: absolute;
-            top: 50%; left: 50%;
+            position: absolute; top: 50%; left: 50%;
             width: 0; height: 0;
             transform-style: preserve-3d;
-            /* Camera rotation applied here via JS */
         }
 
-        /* THE WALL (Where targets spawn) */
         .wall-face {
             position: absolute;
             width: 2000px; height: 2000px;
@@ -47,41 +44,34 @@
                 linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
             background-size: 100px 100px;
             background-color: #0a0a0a;
-            transform: translate(-50%, -50%) translateZ(-600px); /* Push back 600px */
+            transform: translate(-50%, -50%) translateZ(-600px);
             border: 1px solid #333;
         }
 
-        /* TARGETS (ORBS) */
+        /* TARGETS */
         .target {
-            position: absolute;
-            width: 60px; height: 60px;
-            background: var(--accent);
-            border-radius: 50%;
+            position: absolute; width: 60px; height: 60px;
+            background: var(--accent); border-radius: 50%;
             box-shadow: 0 0 30px var(--accent);
             transform: translate(-50%, -50%);
-            /* Ensure targets face the camera */
             backface-visibility: hidden;
         }
         .target.hit {
             background: var(--hit);
             transform: translate(-50%, -50%) scale(1.5);
-            opacity: 0;
-            transition: 0.1s;
+            opacity: 0; transition: 0.1s;
         }
 
-        /* CROSSHAIR (Fixed Center) */
         .crosshair {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             width: 4px; height: 4px;
-            background: #fff;
-            border-radius: 50%;
-            z-index: 100;
-            pointer-events: none;
+            background: #fff; border-radius: 50%;
+            z-index: 100; pointer-events: none;
             box-shadow: 0 0 0 2px rgba(0,0,0,0.5);
         }
 
-        /* --- UI OVERLAYS --- */
+        /* --- UI --- */
         .home-btn {
             position: absolute; top: 20px; left: 20px;
             background: rgba(0,0,0,0.6); color: #aaa; text-decoration: none;
@@ -100,7 +90,7 @@
         .val { font-size: 2rem; font-weight: 900; color: #fff; }
         #score-disp { color: var(--accent); }
 
-        /* SENSITIVITY MENU */
+        /* SETTINGS */
         #settings-panel {
             position: absolute; bottom: 20px; right: 20px;
             background: rgba(0,0,0,0.8); padding: 15px;
@@ -110,8 +100,8 @@
         .setting-row { margin-bottom: 10px; }
         .setting-label { font-size: 0.75rem; color: #aaa; display: flex; justify-content: space-between; }
         input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+        .checkbox-row { display: flex; align-items: center; gap: 10px; font-size: 0.75rem; color: #aaa; }
 
-        /* SCREENS */
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(9, 9, 11, 0.95);
@@ -155,23 +145,22 @@
             <div class="setting-label"><span>Vert Sens</span><span id="v-val">1.0</span></div>
             <input type="range" min="0.1" max="5.0" step="0.1" value="1.0" oninput="updateSens('v', this.value)">
         </div>
-        <div style="font-size:0.7rem; color:#666; text-align:center; margin-top:5px;">Press ESC to unlock cursor</div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="invert-y" onchange="toggleInvert(this.checked)">
+            <label for="invert-y">Invert Y-Axis</label>
+        </div>
+        <div style="font-size:0.7rem; color:#666; text-align:center; margin-top:10px;">Press ESC to unlock cursor</div>
     </div>
 
     <div id="viewport">
         <div id="world">
-            <div class="wall-face" id="wall">
-                </div>
+            <div class="wall-face" id="wall"></div>
         </div>
     </div>
 
     <div id="start-screen" class="overlay">
         <h1 style="color:var(--accent)">3D GRIDSHOT</h1>
-        <p>
-            <strong>TRUE FPS MODE:</strong> Use your mouse to LOOK around.<br>
-            Adjust sensitivity to match your Siege settings.<br>
-            Destroy <strong>blue targets</strong>. Speed is key.
-        </p>
+        <p><strong>TRUE FPS MODE</strong><br>Use your mouse to LOOK around.<br>Destroy blue targets. Speed is key.</p>
         <button class="btn" onclick="initGame()">ENTER ARENA</button>
     </div>
 
@@ -183,34 +172,32 @@
     </div>
 
     <script>
-        // --- ENGINE CONFIG ---
         const world = document.getElementById('world');
         const wall = document.getElementById('wall');
         const viewport = document.getElementById('viewport');
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Game State
         let isRunning = false;
         let score = 0;
         let timeLeft = 45;
-        let targets = [];
         let timerInterval;
 
-        // Camera State (Euler Angles)
-        let camYaw = 0;   // Horizontal (Y-axis rotation)
-        let camPitch = 0; // Vertical (X-axis rotation)
+        let camYaw = 0;   
+        let camPitch = 0; 
         
-        // Sensitivity
         let sensX = 1.0;
         let sensY = 1.0;
+        let invertY = false; // Default: Standard FPS (Up is Up)
 
-        // Cross-Browser Pointer Lock
         viewport.requestPointerLock = viewport.requestPointerLock || viewport.mozRequestPointerLock;
 
-        // --- INPUT HANDLING ---
         function updateSens(axis, val) {
             if (axis === 'h') { sensX = parseFloat(val); document.getElementById('h-val').innerText = val; }
             if (axis === 'v') { sensY = parseFloat(val); document.getElementById('v-val').innerText = val; }
+        }
+
+        function toggleInvert(checked) {
+            invertY = checked;
         }
 
         function initGame() {
@@ -218,27 +205,19 @@
             document.getElementById('end-screen').style.display = 'none';
             viewport.requestPointerLock();
             
-            // Reset Game
-            score = 0;
-            timeLeft = 45;
-            camYaw = 0;
-            camPitch = 0;
+            score = 0; timeLeft = 45; camYaw = 0; camPitch = 0;
             updateCamera();
             
             document.getElementById('score-disp').innerText = score;
             document.getElementById('time-disp').innerText = timeLeft;
             
-            // Spawn initial targets (Grid of 3)
-            wall.innerHTML = ''; // Clear wall
-            spawnTarget();
-            spawnTarget();
-            spawnTarget();
+            wall.innerHTML = '';
+            spawnTarget(); spawnTarget(); spawnTarget();
 
             isRunning = true;
             document.addEventListener("mousemove", handleMouse, false);
             document.addEventListener("mousedown", handleShoot, false);
             
-            // Start Timer
             timerInterval = setInterval(() => {
                 if(!isRunning) return;
                 timeLeft--;
@@ -250,69 +229,55 @@
         function handleMouse(e) {
             if (!isRunning) return;
             
-            // Apply Sensitivity
-            // Note: dividing by divisor to make the slider values feel normal (1.0 = standard)
+            // X-Axis (Yaw)
             camYaw -= e.movementX * (sensX * 0.1); 
-            camPitch -= e.movementY * (sensY * 0.1);
 
-            // Clamp Pitch (Don't break your neck)
+            // Y-Axis (Pitch) - FIXED: Now moves correctly for FPS
+            let moveY = e.movementY * (sensY * 0.1);
+            if(invertY) {
+                camPitch -= moveY; // Inverted Flight Style
+            } else {
+                camPitch += moveY; // Standard FPS Style
+            }
+
+            // Clamp looking up/down
             camPitch = Math.max(-85, Math.min(85, camPitch));
 
             updateCamera();
         }
 
         function updateCamera() {
-            // In CSS 3D, we move the WORLD opposite to the camera movement
-            world.style.transform = `rotateX(${-camPitch}deg) rotateY(${-camYaw}deg)`;
+            // CSS 3D Rotation
+            world.style.transform = `rotateX(${camPitch}deg) rotateY(${camYaw}deg)`;
         }
 
         function spawnTarget() {
             const t = document.createElement('div');
             t.className = 'target';
-            
-            // Random Position on the wall (2000x2000 surface)
-            // Limit to center 1000x800 area so you don't have to turn 180 degrees
-            let x = (Math.random() * 1200) + 400; // 400 to 1600 px
-            let y = (Math.random() * 800) + 600;  // 600 to 1400 px
-            
+            // Restrict spawn area to keep it playable
+            let x = (Math.random() * 1400) + 300; 
+            let y = (Math.random() * 800) + 600;  
             t.style.left = x + 'px';
             t.style.top = y + 'px';
-            
             wall.appendChild(t);
         }
 
         function handleShoot() {
             if (!isRunning) return;
-
-            // RAYCASTING HACK (Center Screen Hit Detection)
-            // Since the crosshair is fixed center, we just check what element is at center screen
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
-            
-            // Get element under center pixel
             const hitEl = document.elementFromPoint(centerX, centerY);
 
             if (hitEl && hitEl.classList.contains('target')) {
-                // HIT!
-                hitSuccess(hitEl);
+                playSound(600, 'triangle'); 
+                hitEl.classList.add('hit');
+                setTimeout(() => hitEl.remove(), 100); 
+                score++;
+                document.getElementById('score-disp').innerText = score;
+                spawnTarget(); 
             } else {
-                // MISS
-                playSound(150, 'sawtooth'); // Error buzz
+                playSound(150, 'sawtooth'); 
             }
-        }
-
-        function hitSuccess(el) {
-            // SFX
-            playSound(600, 'triangle'); // Ping sound
-            
-            // VFX
-            el.classList.add('hit');
-            setTimeout(() => el.remove(), 100); // Remove from DOM after anim
-
-            // Logic
-            score++;
-            document.getElementById('score-disp').innerText = score;
-            spawnTarget(); // Respawn instantly
         }
 
         function endGame() {
@@ -321,12 +286,10 @@
             clearInterval(timerInterval);
             document.removeEventListener("mousemove", handleMouse);
             document.removeEventListener("mousedown", handleShoot);
-            
             document.getElementById('end-screen').style.display = 'flex';
             document.getElementById('final-score').innerText = score;
         }
 
-        // --- AUDIO ---
         function playSound(freq, type) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
@@ -337,7 +300,6 @@
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
-
     </script>
 </body>
 </html>
