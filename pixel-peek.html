@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>R6 Neuro-Trainer</title>
+    <title>R6 Neuro-Trainer + Focus Audio</title>
     <style>
         :root {
             --bg-color: #09090b;
             --panel-color: #18181b;
-            --accent-color: #8b5cf6; /* Violet for Psychology/Brain theme */
+            --accent-color: #8b5cf6; /* Violet */
             --success: #22c55e;
             --danger: #ef4444;
             --warning: #eab308;
@@ -84,35 +84,29 @@
         
         .stat-card { background: #27272a; padding: 15px; border-radius: 8px; border: 1px solid #3f3f46; text-align: center; }
         .stat-val { font-size: 2rem; font-weight: 800; color: #fff; }
-        .stat-label { font-size: 0.7rem; color: #a1a1aa; }
+        .stat-label { font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase; }
 
-        /* The Psychology Box */
         .analysis-box {
-            background: rgba(139, 92, 246, 0.05); /* Violet Tint */
+            background: rgba(139, 92, 246, 0.05);
             border: 1px solid rgba(139, 92, 246, 0.2);
             border-left: 4px solid var(--accent-color);
             padding: 20px; border-radius: 6px;
         }
-        .focus-badge { 
-            display: inline-block; background: var(--accent-color); color: #fff; 
-            font-weight: 700; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; margin-bottom: 10px; 
-        }
+        .focus-badge { display: inline-block; background: var(--accent-color); color: #fff; font-weight: 700; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; margin-bottom: 10px; }
         .advice-text { font-size: 0.9rem; line-height: 1.6; color: #e4e4e7; }
-        .highlight { color: var(--accent-color); font-weight: 700; }
-        
-        /* Drill Box */
-        .drill-box {
-            background: #202024; padding: 15px; border-radius: 6px; margin-top: 15px;
-            border: 1px dashed #555;
-        }
+        .drill-box { background: #202024; padding: 15px; border-radius: 6px; margin-top: 15px; border: 1px dashed #555; }
         .drill-title { color: #fff; font-weight: 700; font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; }
 
-        /* History Chart */
         .chart-box { height: 80px; display: flex; align-items: flex-end; gap: 4px; padding-bottom: 5px; border-bottom: 1px solid #333; }
         .bar { flex: 1; background: #3f3f46; border-radius: 2px 2px 0 0; min-height: 4px; transition: height 0.3s; }
 
-        .btn { width: 100%; padding: 12px; background: #27272a; border: 1px solid #3f3f46; color: #fff; font-weight: 700; cursor: pointer; border-radius: 6px; margin-top: auto; }
+        /* BUTTONS */
+        .btn-group { display: flex; gap: 10px; margin-top: auto; }
+        .btn { padding: 12px; background: #27272a; border: 1px solid #3f3f46; color: #fff; font-weight: 700; cursor: pointer; border-radius: 6px; flex: 1; }
         .btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+        
+        /* Audio Button State */
+        .btn-audio.active { background: #2e1065; border-color: var(--accent-color); color: #c4b5fd; box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
 
     </style>
 </head>
@@ -139,12 +133,12 @@
             </div>
             <div class="stat-card">
                 <div class="stat-val" id="score-disp">--</div>
-                <div class="stat-label">MENTAL STABILITY</div>
+                <div class="stat-label">CONSISTENCY SCORE</div>
             </div>
         </div>
 
         <div>
-            <div class="section-title">Cognitive Load (History)</div>
+            <div class="section-title">History</div>
             <div class="chart-box" id="history-chart"></div>
         </div>
 
@@ -157,7 +151,10 @@
             </div>
         </div>
 
-        <button class="btn" onclick="resetData()">RESET SESSION</button>
+        <div class="btn-group">
+            <button class="btn btn-audio" id="noise-btn" onclick="toggleBrownNoise()">🔊 BROWN NOISE</button>
+            <button class="btn" onclick="resetData()">RESET</button>
+        </div>
     </div>
 
     <script>
@@ -171,6 +168,7 @@
         const scoreDisp = document.getElementById('score-disp');
         const chartBox = document.getElementById('history-chart');
         const analysisContent = document.getElementById('analysis-content');
+        const noiseBtn = document.getElementById('noise-btn');
 
         // State
         let state = "IDLE"; 
@@ -181,6 +179,53 @@
         // Data Store
         let history = []; 
         let errors = 0;   
+
+        // --- AUDIO ENGINE (BROWN NOISE) ---
+        let audioCtx = null;
+        let noiseSource = null;
+        let gainNode = null;
+        let isNoisePlaying = false;
+
+        function toggleBrownNoise() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            if (isNoisePlaying) {
+                // STOP
+                if (noiseSource) noiseSource.stop();
+                noiseBtn.classList.remove('active');
+                isNoisePlaying = false;
+            } else {
+                // PLAY
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const bufferSize = audioCtx.sampleRate * 2; // 2 seconds buffer
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                let lastOut = 0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    lastOut = (lastOut + (0.02 * white)) / 1.02; // Brown noise algo
+                    lastOut *= 3.5; 
+                    data[i] = lastOut;
+                }
+
+                noiseSource = audioCtx.createBufferSource();
+                noiseSource.buffer = buffer;
+                noiseSource.loop = true;
+                
+                gainNode = audioCtx.createGain();
+                gainNode.gain.value = 0.15; 
+                
+                noiseSource.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                noiseSource.start();
+                
+                noiseBtn.classList.add('active');
+                isNoisePlaying = true;
+            }
+        }
+
 
         // --- GAME ENGINE ---
         function handleClick() {
@@ -201,13 +246,11 @@
             clearTimeout(swingTimer);
             isFriendly = false;
             
-            // Visual Reset
             feedbackMsg.style.display = "none";
             startMsg.style.opacity = "0";
             enemyEl.className = "hostile"; 
-            void enemyEl.offsetWidth; // Reflow
+            void enemyEl.offsetWidth; 
 
-            // 20% Friendly Chance
             if (Math.random() < 0.2) {
                 isFriendly = true;
                 enemyEl.className = "friendly";
@@ -222,7 +265,6 @@
                     swingStart = Date.now();
                     enemyEl.classList.add("swing-anim");
                     
-                    // Auto-pass friendly if ignored
                     if (isFriendly) {
                         setTimeout(() => {
                             if (state === "SWINGING") endRound("PASS");
@@ -264,7 +306,6 @@
             const avg = Math.round(sum / history.length);
             avgDisp.innerText = avg;
 
-            // Standard Deviation
             const mean = sum / history.length;
             const variance = history.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / history.length;
             const stdDev = Math.sqrt(variance);
@@ -279,7 +320,6 @@
             scoreDisp.innerText = grade;
             scoreDisp.style.color = gradeCol;
 
-            // Chart
             chartBox.innerHTML = "";
             history.slice(-15).forEach(val => {
                 const bar = document.createElement('div');
@@ -298,24 +338,19 @@
             let tip = "";
             let drill = "";
 
-            // LOGIC TREE
             if (err > 2) {
-                // IMPULSE ISSUES
                 focus = "IMPULSE CONTROL";
                 tip = "Your brain is bypassing verification to gain speed. This causes panic-spraying in game. You must decouple the stimulus (movement) from the action (clicking) until color is verified.";
                 drill = "Say the word 'Blue' or 'Grey' out loud BEFORE clicking. This forces cognitive processing over reflex.";
             } else if (dev > 40) {
-                // INCONSISTENT
                 focus = "MENTAL NOISE";
-                tip = "High variance suggests 'Mental Flicker'. You are likely holding your breath or tensing up too early. Your brain is resetting focus every round.";
+                tip = "High variance suggests 'Mental Flicker'. You are likely holding your breath or tensing up too early. Use the Brown Noise feature to mask external distractions.";
                 drill = "The 4-7-8 Breathing Technique. Inhale 4s, Hold 7s, Exhale 8s. Reset your vagus nerve between attempts.";
             } else if (avg < 210) {
-                // ELITE
                 focus = "FLOW STATE";
                 tip = "You are in Flow. Your subconscious is handling the load. Do not overthink it. Conscious thought will actually slow you down now.";
                 drill = "Maintain 'Soft Focus'. Look 'through' the monitor rather than at a specific pixel. Rely on peripheral detection.";
             } else {
-                // SLOW BUT STABLE
                 focus = "PHYSIOLOGICAL LATENCY";
                 tip = "You are consistent but fighting biological delay. We need to reduce the physical travel time of your finger.";
                 drill = "Pre-Tensioning: Rest your finger on the mouse button with 90% of the force required to click. Remove the 'slack' from your muscle/switch.";
