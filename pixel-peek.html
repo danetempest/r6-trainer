@@ -105,14 +105,13 @@
         .btn { padding: 12px; background: #27272a; border: 1px solid #3f3f46; color: #fff; font-weight: 700; cursor: pointer; border-radius: 6px; flex: 1; }
         .btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
         
-        /* Audio Button State */
         .btn-audio.active { background: #2e1065; border-color: var(--accent-color); color: #c4b5fd; box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
 
     </style>
 </head>
 <body>
 
-    <div id="game-wrapper" onmousedown="handleClick()">
+    <div id="game-wrapper" onmousedown="handleClick(event)">
         <div id="game-container">
             <div id="feedback-msg">PERFECT</div>
             <div id="start-msg">CLICK TO START SESSION</div>
@@ -187,49 +186,52 @@
         let isNoisePlaying = false;
 
         function toggleBrownNoise() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            if (isNoisePlaying) {
-                // STOP
-                if (noiseSource) noiseSource.stop();
-                noiseBtn.classList.remove('active');
-                isNoisePlaying = false;
-            } else {
-                // PLAY
-                if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 
-                const bufferSize = audioCtx.sampleRate * 2; // 2 seconds buffer
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                
-                let lastOut = 0;
-                for (let i = 0; i < bufferSize; i++) {
-                    const white = Math.random() * 2 - 1;
-                    lastOut = (lastOut + (0.02 * white)) / 1.02; // Brown noise algo
-                    lastOut *= 3.5; 
-                    data[i] = lastOut;
-                }
+                if (isNoisePlaying) {
+                    if (noiseSource) noiseSource.stop();
+                    noiseBtn.classList.remove('active');
+                    isNoisePlaying = false;
+                } else {
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    
+                    const bufferSize = audioCtx.sampleRate * 2; 
+                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    
+                    let lastOut = 0;
+                    for (let i = 0; i < bufferSize; i++) {
+                        const white = Math.random() * 2 - 1;
+                        lastOut = (lastOut + (0.02 * white)) / 1.02; 
+                        lastOut *= 3.5; 
+                        data[i] = lastOut;
+                    }
 
-                noiseSource = audioCtx.createBufferSource();
-                noiseSource.buffer = buffer;
-                noiseSource.loop = true;
-                
-                gainNode = audioCtx.createGain();
-                gainNode.gain.value = 0.15; 
-                
-                noiseSource.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                noiseSource.start();
-                
-                noiseBtn.classList.add('active');
-                isNoisePlaying = true;
+                    noiseSource = audioCtx.createBufferSource();
+                    noiseSource.buffer = buffer;
+                    noiseSource.loop = true;
+                    
+                    gainNode = audioCtx.createGain();
+                    gainNode.gain.value = 0.15; 
+                    
+                    noiseSource.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    noiseSource.start();
+                    
+                    noiseBtn.classList.add('active');
+                    isNoisePlaying = true;
+                }
+            } catch (e) {
+                console.error("Audio Engine Error:", e);
+                alert("Audio could not start. Please interact with the page first.");
             }
         }
 
-
         // --- GAME ENGINE ---
-        function handleClick() {
-            if (event.target.closest('#coach-panel')) return;
+        function handleClick(e) {
+            // Prevent click handling if clicking the coach panel buttons
+            if (e && e.target.closest('#coach-panel')) return;
 
             if (state === "IDLE" || state === "ENDED") return startRound();
             if (state === "HOLDING") return endRound("EARLY");
@@ -249,7 +251,7 @@
             feedbackMsg.style.display = "none";
             startMsg.style.opacity = "0";
             enemyEl.className = "hostile"; 
-            void enemyEl.offsetWidth; 
+            void enemyEl.offsetWidth; // Reflow
 
             if (Math.random() < 0.2) {
                 isFriendly = true;
@@ -306,6 +308,7 @@
             const avg = Math.round(sum / history.length);
             avgDisp.innerText = avg;
 
+            // Consistency Calculation
             const mean = sum / history.length;
             const variance = history.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / history.length;
             const stdDev = Math.sqrt(variance);
