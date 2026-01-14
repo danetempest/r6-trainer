@@ -3,382 +3,520 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>R6 Neuro-Trainer + Focus Audio</title>
+    <title>R6 COACH PRO: COMMAND CENTER</title>
     <style>
-        :root {
-            --bg-color: #09090b;
-            --panel-color: #18181b;
-            --accent-color: #8b5cf6; /* Violet */
-            --success: #22c55e;
-            --danger: #ef4444;
-            --warning: #eab308;
-            --enemy-head: #71717a;
-            --enemy-body: #27272a;
+        :root { 
+            /* THEME: Matte Black, Space Gray, Electric Blue */
+            --bg: #050505;
+            --card: #141416;
+            --panel: #1c1c1e;
+            --accent: #38bdf8;          /* Electric Blue */
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: 1px solid rgba(255, 255, 255, 0.08);
+            
+            --p-gold: #fbbf24;
+            --p-red: #ef4444;
+            --p-green: #10b981;
         }
-
-        body {
-            background-color: var(--bg-color);
-            color: #fff;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            height: 100vh;
-            user-select: none;
-        }
-
-        /* --- GAME AREA (LEFT) --- */
-        #game-wrapper {
-            flex: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            cursor: crosshair;
-            border-right: 1px solid #333;
-        }
-
-        #game-container {
-            position: relative;
-            width: 800px; height: 500px;
-            background: radial-gradient(circle at center, #27272a 0%, #000 100%);
-            border: 2px solid #333;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 0 60px rgba(0,0,0,0.6);
-        }
-
-        .head-line { position: absolute; top: 345px; width: 100%; height: 1px; background: rgba(255,255,255,0.05); pointer-events: none; }
-        .wall { position: absolute; right: 0; top: 0; width: 400px; height: 100%; background: #09090b; border-left: 4px solid #000; z-index: 20; }
         
-        #enemy { position: absolute; right: 10px; bottom: 140px; width: 60px; height: 140px; z-index: 10; will-change: transform; }
-        .head { width: 30px; height: 30px; border-radius: 50%; margin: 0 auto; border: 1px solid #555; position: relative; top: 5px; z-index: 12; transition: 0.2s; }
-        .body { width: 60px; height: 100px; border-radius: 8px; margin-top: 5px; box-shadow: inset 0 0 10px rgba(0,0,0,0.9); transition: 0.2s; }
-        .gun { width: 50px; height: 8px; background: #000; position: absolute; top: 50px; left: -10px; }
-
-        .hostile .head { background-color: var(--enemy-head); }
-        .hostile .body { background-color: var(--enemy-body); }
-        .friendly .head { background-color: #3b82f6; border-color: #60a5fa; }
-        .friendly .body { background-color: #1e3a8a; }
-
-        .swing-anim { transition: transform 0.2s cubic-bezier(0.1, 0.7, 1.0, 0.1); transform: translateX(-410px) !important; }
-        .enemy-hit { transform: translateX(-410px) rotate(-90deg) translateY(100px) !important; transition: transform 0.3s ease-in !important; filter: grayscale(100%); opacity: 0.5; }
-
-        #feedback-msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; font-weight: 900; z-index: 100; text-shadow: 0 0 30px #000; display: none; }
-        #start-msg { position: absolute; bottom: 40px; width: 100%; text-align: center; color: #71717a; font-weight: 600; letter-spacing: 1px; pointer-events: none; }
-
-        /* --- COACH PANEL (RIGHT) --- */
-        #coach-panel {
-            flex: 1;
-            background: var(--panel-color);
-            padding: 30px;
-            display: flex; flex-direction: column; gap: 20px;
-            overflow-y: auto;
+        * { box-sizing: border-box; user-select: none; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text-main); 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            min-height: 100vh; 
+            overflow-x: hidden;
         }
 
-        .panel-header { font-size: 1.8rem; font-weight: 800; color: var(--accent-color); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .section-title { font-size: 0.8rem; font-weight: 700; color: #a1a1aa; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        /* --- ICONS (SVG) --- */
+        .icon-lg { width: 64px; height: 64px; fill: var(--accent); margin-bottom: 20px; }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        
-        .stat-card { background: #27272a; padding: 15px; border-radius: 8px; border: 1px solid #3f3f46; text-align: center; }
-        .stat-val { font-size: 2rem; font-weight: 800; color: #fff; }
-        .stat-label { font-size: 0.7rem; color: #a1a1aa; text-transform: uppercase; }
-
-        .analysis-box {
-            background: rgba(139, 92, 246, 0.05);
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-left: 4px solid var(--accent-color);
-            padding: 20px; border-radius: 6px;
+        /* --- VIEW MANAGEMENT --- */
+        .view-section {
+            display: none; width: 100vw; min-height: 100vh;
+            flex-direction: column; align-items: center; padding: 40px 20px;
+            animation: fadeIn 0.4s ease-out;
         }
-        .focus-badge { display: inline-block; background: var(--accent-color); color: #fff; font-weight: 700; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; margin-bottom: 10px; }
-        .advice-text { font-size: 0.9rem; line-height: 1.6; color: #e4e4e7; }
-        .drill-box { background: #202024; padding: 15px; border-radius: 6px; margin-top: 15px; border: 1px dashed #555; }
-        .drill-title { color: #fff; font-weight: 700; font-size: 0.85rem; margin-bottom: 5px; text-transform: uppercase; }
+        .view-section.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .chart-box { height: 80px; display: flex; align-items: flex-end; gap: 4px; padding-bottom: 5px; border-bottom: 1px solid #333; }
-        .bar { flex: 1; background: #3f3f46; border-radius: 2px 2px 0 0; min-height: 4px; transition: height 0.3s; }
-
-        /* BUTTONS */
-        .btn-group { display: flex; gap: 10px; margin-top: auto; }
-        .btn { padding: 12px; background: #27272a; border: 1px solid #3f3f46; color: #fff; font-weight: 700; cursor: pointer; border-radius: 6px; flex: 1; }
-        .btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+        /* --- DASHBOARD --- */
+        #dashboard-view { justify-content: center; gap: 50px; }
         
-        .btn-audio.active { background: #2e1065; border-color: var(--accent-color); color: #c4b5fd; box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
+        .dash-title {
+            font-size: 3.5rem; font-weight: 900; letter-spacing: -2px;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px var(--accent-glow); text-align: center;
+        }
+
+        .module-grid { display: flex; gap: 30px; }
+
+        .module-card {
+            width: 320px; height: 380px;
+            background: var(--card); border: var(--border); border-radius: 20px;
+            padding: 40px 30px;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+            transition: 0.3s; cursor: pointer;
+        }
+        .module-card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 20px 50px rgba(56, 189, 248, 0.15); }
+        .module-card h2 { margin: 0; font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
+        .module-card p { font-size: 0.9rem; color: var(--text-dim); text-align: center; line-height: 1.6; }
+        .module-btn { 
+            background: var(--accent); color: #000; font-weight: 800; padding: 14px; 
+            border-radius: 8px; width: 100%; text-align: center; letter-spacing: 1px; font-size: 0.8rem;
+        }
+
+        /* --- TRAINER UI --- */
+        .lab-container { width: 1000px; max-width: 95vw; display: flex; flex-direction: column; gap: 20px; }
+
+        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        .back-btn {
+            background: transparent; border: 1px solid var(--text-dim); color: var(--text-dim);
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.75rem;
+            transition: 0.2s; display: flex; align-items: center; gap: 8px;
+        }
+        .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        .daily-tracker { flex: 1; max-width: 400px; margin-left: 30px; }
+        .daily-label { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-dim); font-weight: 700; margin-bottom: 6px; }
+        .progress-track { width: 100%; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.5s; box-shadow: 0 0 10px var(--accent-glow); }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 10px; }
+        .bento-card { 
+            background: var(--panel); border: var(--border); border-radius: 12px; padding: 15px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;
+        }
+        .stat-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 4px; text-transform: uppercase; font-weight: 700; }
+        .hero-val { font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; }
+
+        /* Viewport */
+        .viewport { 
+            height: 450px; 
+            background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
+            border-radius: 12px; position: relative; overflow: hidden; 
+            border: 2px solid #333; perspective: 1000px;
+        }
+
+        /* 3D World */
+        .world-container { position: absolute; width: 300%; height: 100%; left: -100%; top: 0; transform-style: preserve-3d; }
+        .hallway { position: absolute; width: 33.33%; height: 100%; left: 33.33%; transform-style: preserve-3d; }
+        .floor { 
+            position: absolute; width: 2000px; height: 2000px; left: 50%; bottom: -600px; margin-left: -1000px; 
+            background: repeating-linear-gradient(90deg, #1c1c1e 0px, #1c1c1e 48px, #333 48px, #333 50px), 
+                        repeating-linear-gradient(0deg, #1c1c1e 0px, #1c1c1e 48px, #333 48px, #333 50px); 
+            transform: rotateX(85deg); 
+        }
+        .wall { position: absolute; width: 800px; height: 100%; top: -200px; background: linear-gradient(90deg, #000, #111); }
+        .wall-left { left: -300px; transform: rotateY(80deg); }
+        .wall-right { right: -300px; transform: rotateY(-80deg); background: linear-gradient(-90deg, #000, #111); }
+        
+        .doorframe { position: absolute; width: 140px; height: 100%; left: 50%; top: 0; margin-left: -70px; z-index: 10; pointer-events: none; transition: width 0.3s, margin-left 0.3s; }
+        .door-col { position: absolute; width: 40px; height: 100%; background: #222; border: 1px solid #444; }
+
+        .enemy-target { 
+            position: absolute; top: 50%; left: 50%; margin-top: -30px; 
+            width: 40px; height: 80px; z-index: 5; transition: transform 0.05s, opacity 0.1s; 
+        }
+        .enemy-target.dead { opacity: 0; transform: scale(0.9); }
+        .enemy-head { 
+            position: absolute; top: 0; left: 5px; width: 30px; height: 30px; 
+            background: #ef4444; border-radius: 50%; border: 2px solid #991b1b;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+        .enemy-body { position: absolute; top: 32px; left: 0; width: 40px; height: 50px; background: #ef4444; border-radius: 4px; opacity: 0.6; }
+
+        .weapon-container { position: absolute; bottom: 0; left: 50%; width: 200px; height: 160px; margin-left: -100px; z-index: 50; pointer-events: none; }
+        .weapon-model { position: absolute; bottom: -20px; left: 50%; margin-left: -40px; transition: transform 0.03s linear; }
+        .gun-body { width: 80px; height: 45px; background: #111; border-radius: 4px; border: 1px solid #333; position: relative; }
+        .gun-optic { position: absolute; top: -15px; left: 20px; width: 40px; height: 15px; background: #000; border: 1px solid var(--accent); box-shadow: 0 0 5px var(--accent); }
+
+        .crosshair { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 20px; height: 20px; z-index: 100; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ch-line { position: absolute; background: var(--accent); }
+        .ch-h { width: 100%; height: 2px; } .ch-v { width: 2px; height: 100%; }
+        .ch-dot { width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
+
+        /* HUD Keys */
+        .combo-track { 
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
+            z-index: 80; display: flex; gap: 12px; 
+        }
+        .key-node { 
+            width: 50px; height: 50px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 10px; display: flex; align-items: center; justify-content: center; 
+            font-size: 1.2rem; font-weight: 800; color: #555; transition: 0.1s;
+        }
+        .key-node.active { opacity: 1; border-color: var(--accent); color: #fff; box-shadow: 0 0 15px var(--accent-glow); transform: scale(1.1); }
+        .key-node.hit { background: var(--accent); border-color: var(--accent); color: #000; }
+
+        /* Streak & Feedback */
+        .feedback-text { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); font-size: 2rem; font-weight: 900; opacity: 0; transition: 0.2s; z-index: 100; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        .feedback-text.show { opacity: 1; }
+        
+        .streak-popup {
+            position: absolute; top: 40%; left: 60%; 
+            font-size: 4rem; font-weight: 900; color: var(--accent);
+            text-shadow: 0 0 20px var(--accent);
+            opacity: 0; pointer-events: none; z-index: 200;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+        .streak-popup.pop { animation: popText 0.3s ease-out; }
+        @keyframes popText { 0% { opacity: 1; transform: scale(0.5); } 50% { transform: scale(1.2); } 100% { opacity: 0; transform: scale(1.5); } }
+        .confetti { position: absolute; width: 8px; height: 8px; background: var(--accent); animation: fall 1s linear forwards; z-index: 999; }
+        @keyframes fall { to { transform: translateY(300px) rotate(360deg); opacity: 0; } }
+
+        /* Controls UI */
+        .controls-wrapper { display: flex; flex-direction: column; gap: 10px; }
+        .control-row { display: flex; gap: 10px; width: 100%; }
+        .glass-panel { background: var(--panel); border: 1px solid #333; border-radius: 8px; padding: 15px; flex: 1; }
+        .input-label { font-size: 0.65rem; color: var(--text-dim); font-weight: 700; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .styled-slider { width: 100%; height: 4px; background: #333; border-radius: 2px; -webkit-appearance: none; display: block; margin-top: 10px; }
+        .styled-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; }
+        
+        .select-box { background: #000; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 6px; width: 100%; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+        .btn { background: #111; border: 1px solid #333; color: var(--text-dim); padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.8rem; transition: 0.2s; letter-spacing: 0.5px; }
+        .btn:hover { border-color: var(--accent); color: #fff; }
+        .btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
     </style>
 </head>
 <body>
 
-    <div id="game-wrapper" onmousedown="handleClick(event)">
-        <div id="game-container">
-            <div id="feedback-msg">PERFECT</div>
-            <div id="start-msg">CLICK TO START SESSION</div>
-            <div class="head-line"></div>
-            <div id="enemy" class="hostile"><div class="head"></div><div class="body"><div class="gun"></div></div></div>
-            <div class="wall"></div>
+    <div id="dashboard-view" class="view-section active">
+        <div class="dash-title">R6 COACH PRO</div>
+        <div class="module-grid">
+            <div class="module-card" onclick="goToView('trainer-view')">
+                <svg class="icon-lg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4zm4 2c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                <h2>PEEK TRAINER</h2>
+                <p>Mechanics, rhythm, and pre-fire timing. Master the A-D-E-Q sequence.</p>
+                <div class="module-btn">ENTER SIMULATION</div>
+            </div>
+            <div class="module-card" onclick="goToView('strat-view')">
+                <svg class="icon-lg" viewBox="0 0 24 24"><path d="M20.5 3l-6 2-6-2-5.5 1.83v15.34l6 2 6-2 5.5 1.83v-15.34l-5.5-1.83zm-6 15.34l-6 2v-12.68l6-2v12.68zm6-2v-12.68l-6 2v12.68l6-2z"/></svg>
+                <h2>STRAT BOARD</h2>
+                <p>Connect to R6Calls.com for full map blueprints and callouts.</p>
+                <div class="module-btn">OPEN MAPS</div>
+            </div>
         </div>
-        <a href="index.html" style="margin-top: 20px; color: #52525b; text-decoration: none; font-size: 0.9rem;">← RETURN TO HUB</a>
     </div>
 
-    <div id="coach-panel">
-        <div class="panel-header">NEURO-TRAINER</div>
-        
-        <div class="grid-2">
-            <div class="stat-card">
-                <div class="stat-val" id="avg-disp">--</div>
-                <div class="stat-label">AVG REACTION (MS)</div>
+    <div id="trainer-view" class="view-section">
+        <div class="lab-container">
+            <div class="top-bar">
+                <button class="back-btn" onclick="goToView('dashboard-view')">← DASHBOARD</button>
+                <div class="daily-tracker">
+                    <div class="daily-label"><span>DAILY GOAL: S-RANKS</span><span id="daily-text">0 / 50</span></div>
+                    <div class="progress-track"><div class="progress-fill" id="daily-fill"></div></div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-val" id="score-disp">--</div>
-                <div class="stat-label">CONSISTENCY SCORE</div>
+
+            <div class="stats-grid">
+                <div class="bento-card" style="grid-column: span 2;">
+                    <span class="stat-label">LAST PEEK</span>
+                    <span class="hero-val" id="time-display">0<span style="font-size:1.5rem; color:#666">ms</span></span>
+                </div>
+                <div class="bento-card">
+                    <span class="stat-label">STREAK</span>
+                    <span class="hero-val" id="streak-disp" style="color:var(--accent);">0</span>
+                </div>
+                <div class="bento-card">
+                    <span class="stat-label">ACCURACY</span>
+                    <span class="hero-val" id="acc-disp" style="font-size:2rem;">0%</span>
+                </div>
             </div>
-        </div>
 
-        <div>
-            <div class="section-title">History</div>
-            <div class="chart-box" id="history-chart"></div>
-        </div>
+            <div class="viewport" id="viewport">
+                <div class="feedback-text" id="feedback-text">READY</div>
+                <div class="streak-popup" id="streak-pop">+1</div>
+                <div class="crosshair" id="crosshair">
+                    <div class="ch-line ch-h"></div>
+                    <div class="ch-line ch-v"></div>
+                    <div class="ch-dot" id="ch-dot"></div>
+                </div>
+                <div class="combo-track" id="keys-display">
+                    <div id="k0" class="key-node">A</div>
+                    <div id="k1" class="key-node">D</div>
+                    <div id="k2" class="key-node">E</div>
+                    <div id="k3" class="key-node">Q</div>
+                </div>
+                <div class="world-container" id="world">
+                    <div class="hallway">
+                        <div class="floor"></div><div class="wall wall-left"></div><div class="wall wall-right"></div>
+                        <div class="doorframe" id="doorframe">
+                            <div class="door-col" style="left:0"></div><div class="door-col" style="right:0"></div>
+                        </div>
+                        <div class="enemy-target" id="enemy">
+                            <div class="enemy-head"></div><div class="enemy-body"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="weapon-container">
+                    <div class="weapon-model" id="weapon">
+                        <div class="gun-body"><div class="gun-optic"></div></div>
+                    </div>
+                </div>
+            </div>
 
-        <div>
-            <div class="section-title">Performance Psychology</div>
-            <div class="analysis-box" id="analysis-content">
-                <div style="color:#71717a; font-style: italic;">
-                    Gathering biometrics... Complete 5 rounds to unlock analysis.
+            <div class="controls-wrapper">
+                <div class="control-row">
+                    <div class="glass-panel">
+                        <span class="input-label">DRILL MODE</span>
+                        <select class="select-box" onchange="setMode(this.value)">
+                            <option value="full">FULL DRILL</option>
+                            <option value="intel">INTEL ONLY</option>
+                            <option value="kill">KILL ONLY</option>
+                            <option value="freeplay">FREEPLAY</option>
+                        </select>
+                    </div>
+                    <div class="glass-panel">
+                        <span class="input-label">DIFFICULTY WINDOW</span>
+                        <select class="select-box" onchange="setDifficulty(this.value)">
+                            <option value="1.0">ROOKIE (Standard)</option>
+                            <option value="0.85">ADVANCED (Ranked)</option>
+                            <option value="0.7">PRO LEAGUE (Strict)</option>
+                        </select>
+                    </div>
+                    <div class="glass-panel">
+                        <span class="input-label">DOOR WIDTH</span>
+                        <input type="range" class="styled-slider" min="60" max="200" value="140" oninput="setDoorWidth(this.value)">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="glass-panel" style="flex:2">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span class="input-label">TARGET SPEED (BPM)</span>
+                            <span class="input-label" style="color:var(--accent)" id="bpm-val">120</span>
+                        </div>
+                        <input type="range" class="styled-slider" min="60" max="220" step="5" value="120" oninput="setBPM(this.value)">
+                    </div>
+                    <div class="glass-panel" style="flex:2; display:flex; gap:10px; align-items:flex-end;">
+                        <button class="btn" style="flex:1" onclick="swapSide()">SWAP SIDE</button>
+                        <button class="btn" style="flex:1" onclick="toggleMusic()" id="music-btn">BEAT SYNC</button>
+                        <button class="btn" style="flex:1" onclick="resetStats()">RESET</button>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="btn-group">
-            <button class="btn btn-audio" id="noise-btn" onclick="toggleBrownNoise()">🔊 BROWN NOISE</button>
-            <button class="btn" onclick="resetData()">RESET</button>
+    <div id="strat-view" class="view-section">
+        <div class="top-bar">
+            <button class="back-btn" onclick="goToView('dashboard-view')">← DASHBOARD</button>
+            <div style="font-weight:900; color:#fff;">STRATEGY LINK</div>
+        </div>
+
+        <div class="module-card" style="width: 100%; height: 500px; justify-content: center; gap: 20px; cursor: default; border-color: #333; transform: none;">
+            <svg class="icon-lg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <h2>CONNECT TO R6CALLS.COM</h2>
+            <p style="max-width: 500px;">
+                Securely launch the tactical board in a dedicated window.<br>
+                Select a map below to begin.
+            </p>
+            
+            <div style="display:flex; gap:10px; width: 100%; max-width: 500px; justify-content: center;">
+                <select class="select-box" id="r6-map-select" style="width: 200px;">
+                    <option value="oregon">Oregon</option>
+                    <option value="clubhouse">Clubhouse</option>
+                    <option value="coastline">Coastline</option>
+                    <option value="consulate">Consulate</option>
+                    <option value="bank">Bank</option>
+                    <option value="chalet">Chalet</option>
+                    <option value="kafe">Kafe</option>
+                </select>
+                <button class="module-btn" style="width: 150px;" onclick="launchR6Calls()">LAUNCH MAP</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- CONFIG ---
-        const enemyEl = document.getElementById('enemy');
-        const feedbackMsg = document.getElementById('feedback-msg');
-        const startMsg = document.getElementById('start-msg');
+        // ==========================================
+        // CONFIG & VARIABLES
+        // ==========================================
+        const SEQS = { 'ADEQ': ['a','d','e','q'], 'DAQE': ['d','a','q','e'] };
+        let currentSide = 'ADEQ';
+        let idx = 0;
+        let startTime = 0;
+        let streak = 0;
+        let attempts = 0;
+        let sRanks = 0;
+        let bpm = 120;
+        let difficultyMult = 1.0;
+        let mode = 'full';
         
-        // Coach Elements
-        const avgDisp = document.getElementById('avg-disp');
-        const scoreDisp = document.getElementById('score-disp');
-        const chartBox = document.getElementById('history-chart');
-        const analysisContent = document.getElementById('analysis-content');
-        const noiseBtn = document.getElementById('noise-btn');
+        // Physics
+        let cx=0, tx=0, cLean=0, tLean=0;
+        const LERP_SPEED = 0.4;
 
-        // State
-        let state = "IDLE"; 
-        let swingStart = 0;
-        let swingTimer = null;
-        let isFriendly = false;
-        
-        // Data Store
-        let history = []; 
-        let errors = 0;   
+        // Audio Engine
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let musicInterval = null;
+        let musicActive = false;
 
-        // --- AUDIO ENGINE (BROWN NOISE) ---
-        let audioCtx = null;
-        let noiseSource = null;
-        let gainNode = null;
-        let isNoisePlaying = false;
+        // ==========================================
+        // GAME ENGINE
+        // ==========================================
+        function loop() {
+            cx += (tx - cx) * LERP_SPEED;
+            cLean += (tLean - cLean) * LERP_SPEED;
+            document.getElementById('world').style.transform = `translateX(${cx}px)`;
+            document.getElementById('weapon').style.transform = `translateX(${cLean * 20}px) rotateZ(${cLean * 15}deg)`;
+            requestAnimationFrame(loop);
+        }
+        loop();
 
-        function toggleBrownNoise() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                if (isNoisePlaying) {
-                    if (noiseSource) noiseSource.stop();
-                    noiseBtn.classList.remove('active');
-                    isNoisePlaying = false;
+        window.addEventListener('keydown', e => {
+            if(!document.getElementById('trainer-view').classList.contains('active')) return;
+            const k = e.key.toLowerCase();
+            if(k === ' ') { e.preventDefault(); swapSide(); return; }
+            const seq = SEQS[currentSide];
+            if(k === seq[idx]) {
+                if(idx===0) { startTime = performance.now(); document.getElementById('k0').classList.add('active'); }
+                document.getElementById('k'+idx).classList.add('hit');
+                // Movement
+                if(currentSide === 'ADEQ') {
+                    if(idx===0) tx = 80; if(idx===1) tx = -60; if(idx===2) { tx = -80; tLean = 1; } if(idx===3) { tx = -40; tLean = -0.2; }
                 } else {
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
-                    
-                    const bufferSize = audioCtx.sampleRate * 2; 
-                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                    const data = buffer.getChannelData(0);
-                    
-                    let lastOut = 0;
-                    for (let i = 0; i < bufferSize; i++) {
-                        const white = Math.random() * 2 - 1;
-                        lastOut = (lastOut + (0.02 * white)) / 1.02; 
-                        lastOut *= 3.5; 
-                        data[i] = lastOut;
-                    }
-
-                    noiseSource = audioCtx.createBufferSource();
-                    noiseSource.buffer = buffer;
-                    noiseSource.loop = true;
-                    
-                    gainNode = audioCtx.createGain();
-                    gainNode.gain.value = 0.15; 
-                    
-                    noiseSource.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    noiseSource.start();
-                    
-                    noiseBtn.classList.add('active');
-                    isNoisePlaying = true;
+                    if(idx===0) tx = -80; if(idx===1) tx = 60; if(idx===2) { tx = 80; tLean = -1; } if(idx===3) { tx = 40; tLean = 0.2; }
                 }
-            } catch (e) {
-                console.error("Audio Engine Error:", e);
-                alert("Audio could not start. Please interact with the page first.");
-            }
+                idx++; if(idx===4) finish();
+            } else if(['a','d','e','q'].includes(k)) { if(mode !== 'freeplay') fail(); }
+        });
+
+        function finish() {
+            const total = performance.now() - startTime;
+            const target = (60000/bpm) * 3 * difficultyMult; 
+            document.getElementById('weapon').style.transform += ` translateY(20px)`; 
+            document.getElementById('enemy').classList.add('dead');
+            let rank = 'D';
+            if(mode === 'freeplay') rank = 'PRACTICE';
+            else { if(total < target * 0.85) rank = 'S'; else if(total < target) rank = 'A'; }
+            updateStats(total, rank);
+            setTimeout(resetRound, 100);
         }
 
-        // --- GAME ENGINE ---
-        function handleClick(e) {
-            // Prevent click handling if clicking the coach panel buttons
-            if (e && e.target.closest('#coach-panel')) return;
-
-            if (state === "IDLE" || state === "ENDED") return startRound();
-            if (state === "HOLDING") return endRound("EARLY");
-            if (state === "SWINGING") {
-                if (isFriendly) return endRound("TK");
-                const ms = Date.now() - swingStart;
-                history.push(ms);
-                endRound("HIT", ms);
-            }
+        function fail() {
+            streak = 0; updateStats(0, 'FAIL');
+            document.getElementById('viewport').style.boxShadow = "inset 0 0 50px rgba(239, 68, 68, 0.5)";
+            setTimeout(() => document.getElementById('viewport').style.boxShadow = "none", 200);
+            resetRound();
         }
 
-        function startRound() {
-            state = "HOLDING";
-            clearTimeout(swingTimer);
-            isFriendly = false;
-            
-            feedbackMsg.style.display = "none";
-            startMsg.style.opacity = "0";
-            enemyEl.className = "hostile"; 
-            void enemyEl.offsetWidth; // Reflow
+        function resetRound() {
+            idx = 0; tx = 0; tLean = 0;
+            document.querySelectorAll('.key-node').forEach(k => { k.classList.remove('hit'); k.classList.remove('active'); });
+            document.getElementById('enemy').classList.remove('dead');
+            randomizeTarget();
+        }
 
-            if (Math.random() < 0.2) {
-                isFriendly = true;
-                enemyEl.className = "friendly";
+        function randomizeTarget() {
+            const offset = (Math.random() * 60) - 30;
+            const base = currentSide === 'ADEQ' ? 'calc(50% + 70px)' : 'calc(50% - 110px)';
+            const el = document.getElementById('enemy');
+            el.style.left = base; el.style.transform = `translateX(${offset}px)`;
+        }
+
+        // ==========================================
+        // STATS & UI
+        // ==========================================
+        function updateStats(ms, rank) {
+            if(rank !== 'FAIL' && rank !== 'PRACTICE') attempts++;
+            if(rank === 'S') { streak++; sRanks++; triggerPopup("+" + streak); if(streak > 0 && streak % 10 === 0) fireConfetti(); } 
+            else if (rank === 'FAIL') { streak = 0; }
+            if(ms > 0) document.getElementById('time-display').innerHTML = Math.round(ms) + '<span style="font-size:1.5rem; color:#666">ms</span>';
+            document.getElementById('streak-disp').innerText = streak;
+            document.getElementById('acc-disp').innerText = attempts > 0 ? Math.round((sRanks/attempts)*100) + "%" : "0%";
+            document.getElementById('daily-text').innerText = sRanks + " / 50";
+            document.getElementById('daily-fill').style.width = Math.min(100, (sRanks/50)*100) + "%";
+        }
+
+        function swapSide() {
+            currentSide = currentSide === 'ADEQ' ? 'DAQE' : 'ADEQ';
+            const k = document.querySelectorAll('.key-node');
+            if(currentSide === 'ADEQ') { k[0].innerText='A'; k[1].innerText='D'; k[2].innerText='E'; k[3].innerText='Q'; }
+            else { k[0].innerText='D'; k[1].innerText='A'; k[2].innerText='Q'; k[3].innerText='E'; }
+            resetRound();
+        }
+
+        // ==========================================
+        // AUDIO ENGINE
+        // ==========================================
+        function toggleMusic() {
+            if(musicActive) {
+                clearInterval(musicInterval); musicActive=false;
+                document.getElementById('music-btn').classList.remove('active');
             } else {
-                enemyEl.className = "hostile";
+                if(audioCtx.state === 'suspended') audioCtx.resume();
+                musicActive = true;
+                document.getElementById('music-btn').classList.add('active');
+                playBeat();
             }
-
-            const delay = Math.random() * 2000 + 1500;
-            swingTimer = setTimeout(() => {
-                if (state === "HOLDING") {
-                    state = "SWINGING";
-                    swingStart = Date.now();
-                    enemyEl.classList.add("swing-anim");
-                    
-                    if (isFriendly) {
-                        setTimeout(() => {
-                            if (state === "SWINGING") endRound("PASS");
-                        }, 800);
-                    }
-                }
-            }, delay);
         }
 
-        function endRound(type, ms = 0) {
-            state = "ENDED";
-            let txt = "", col = "#fff";
-
-            if (type === "EARLY") {
-                txt = "IMPULSE ERROR"; col = "#eab308"; errors++;
-                enemyEl.classList.add("swing-anim");
-            } else if (type === "TK") {
-                txt = "TEAM KILL"; col = "#ef4444"; errors++;
-            } else if (type === "PASS") {
-                txt = "DISCIPLINED"; col = "#3b82f6";
-            } else if (type === "HIT") {
-                txt = ms + " MS"; 
-                col = ms < 220 ? "#38bdf8" : (ms < 300 ? "#22c55e" : "#fff");
-                enemyEl.classList.add("enemy-hit");
-            }
-
-            feedbackMsg.innerText = txt;
-            feedbackMsg.style.color = col;
-            feedbackMsg.style.display = "block";
-            
-            updateCoach();
-            setTimeout(() => { startMsg.style.opacity = "1"; startMsg.innerText = "CLICK TO CONTINUE"; }, 600);
+        function playBeat() {
+            if(!musicActive) return;
+            const interval = 60000 / bpm;
+            clearInterval(musicInterval);
+            let step = 0;
+            musicInterval = setInterval(() => {
+                // Simple Kick on 1, Snare on 3
+                if(step % 4 === 0) playDrum(150, 'sine'); // Kick
+                if(step % 4 === 2) playDrum(200, 'triangle'); // Snare
+                step++;
+            }, interval / 4);
         }
 
-        // --- COACHING LOGIC ---
-        function updateCoach() {
-            if (history.length === 0) return;
-            const sum = history.reduce((a,b)=>a+b, 0);
-            const avg = Math.round(sum / history.length);
-            avgDisp.innerText = avg;
-
-            // Consistency Calculation
-            const mean = sum / history.length;
-            const variance = history.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / history.length;
-            const stdDev = Math.sqrt(variance);
-            
-            let grade = "C";
-            let gradeCol = "#fff";
-            if (stdDev < 15) { grade = "A+"; gradeCol = "#38bdf8"; }
-            else if (stdDev < 30) { grade = "A"; gradeCol = "#22c55e"; }
-            else if (stdDev < 50) { grade = "B"; gradeCol = "#eab308"; }
-            else { grade = "D"; gradeCol = "#ef4444"; }
-            
-            scoreDisp.innerText = grade;
-            scoreDisp.style.color = gradeCol;
-
-            chartBox.innerHTML = "";
-            history.slice(-15).forEach(val => {
-                const bar = document.createElement('div');
-                bar.className = 'bar';
-                let h = Math.max(10, 100 - (val - 150)/3);
-                bar.style.height = h + "%";
-                bar.style.backgroundColor = val < 250 ? "#8b5cf6" : "#3f3f46";
-                chartBox.appendChild(bar);
-            });
-
-            if (history.length >= 5) generatePsychAdvice(avg, stdDev, errors);
+        function playDrum(freq, type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = freq; osc.type = type;
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        function generatePsychAdvice(avg, dev, err) {
-            let focus = "ANALYZING";
-            let tip = "";
-            let drill = "";
+        // ==========================================
+        // SETTINGS & NAVIGATION
+        // ==========================================
+        function setBPM(val) { bpm = val; document.getElementById('bpm-val').innerText = val; if(musicActive) playBeat(); }
+        function setDoorWidth(val) { document.getElementById('doorframe').style.width = val + 'px'; document.getElementById('doorframe').style.marginLeft = -(val/2) + 'px'; }
+        function setDifficulty(val) { difficultyMult = parseFloat(val); }
+        function setMode(val) { mode = val; resetRound(); }
+        function triggerPopup(text) { const el = document.getElementById('streak-pop'); el.innerText = text; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+        function fireConfetti() { triggerPopup("CONFIDENCE!"); for(let i=0; i<20; i++) { const c = document.createElement('div'); c.className = 'confetti'; c.style.left = Math.random() * 100 + "%"; document.getElementById('viewport').appendChild(c); setTimeout(() => c.remove(), 1000); } }
 
-            if (err > 2) {
-                focus = "IMPULSE CONTROL";
-                tip = "Your brain is bypassing verification to gain speed. This causes panic-spraying in game. You must decouple the stimulus (movement) from the action (clicking) until color is verified.";
-                drill = "Say the word 'Blue' or 'Grey' out loud BEFORE clicking. This forces cognitive processing over reflex.";
-            } else if (dev > 40) {
-                focus = "MENTAL NOISE";
-                tip = "High variance suggests 'Mental Flicker'. You are likely holding your breath or tensing up too early. Use the Brown Noise feature to mask external distractions.";
-                drill = "The 4-7-8 Breathing Technique. Inhale 4s, Hold 7s, Exhale 8s. Reset your vagus nerve between attempts.";
-            } else if (avg < 210) {
-                focus = "FLOW STATE";
-                tip = "You are in Flow. Your subconscious is handling the load. Do not overthink it. Conscious thought will actually slow you down now.";
-                drill = "Maintain 'Soft Focus'. Look 'through' the monitor rather than at a specific pixel. Rely on peripheral detection.";
-            } else {
-                focus = "PHYSIOLOGICAL LATENCY";
-                tip = "You are consistent but fighting biological delay. We need to reduce the physical travel time of your finger.";
-                drill = "Pre-Tensioning: Rest your finger on the mouse button with 90% of the force required to click. Remove the 'slack' from your muscle/switch.";
-            }
-
-            analysisContent.innerHTML = `
-                <div class="focus-badge">${focus}</div>
-                <div class="advice-text">
-                    ${tip}
-                </div>
-                <div class="drill-box">
-                    <div class="drill-title">RECOMMENDED TRAINING:</div>
-                    <div class="advice-text" style="color:#a1a1aa;">${drill}</div>
-                </div>
-            `;
+        function launchR6Calls() {
+            const map = document.getElementById('r6-map-select').value;
+            const links = {
+                'oregon': 'https://r6calls.com/maps/oregon',
+                'clubhouse': 'https://r6calls.com/maps/clubhouse',
+                'coastline': 'https://r6calls.com/maps/coastline',
+                'bank': 'https://r6calls.com/maps/bank',
+                'chalet': 'https://r6calls.com/maps/chalet',
+                'kafe': 'https://r6calls.com/maps/kafe-dostoyevsky',
+                'consulate': 'https://r6calls.com/maps/consulate'
+            };
+            window.open(links[map], 'R6StratBoard', 'width=1200,height=800,menubar=no,toolbar=no');
         }
 
-        function resetData() {
-            history = [];
-            errors = 0;
-            avgDisp.innerText = "--";
-            scoreDisp.innerText = "--";
-            chartBox.innerHTML = "";
-            analysisContent.innerHTML = '<div style="color:#71717a; font-style:italic;">Session reset. Awaiting data...</div>';
+        function goToView(id) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
+
+        // Init
+        randomizeTarget();
     </script>
 </body>
 </html>
