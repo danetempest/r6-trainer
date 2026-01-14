@@ -54,7 +54,7 @@
             text-shadow: 0 0 40px var(--accent-glow); text-align: center;
         }
 
-        .module-grid { display: flex; gap: 30px; }
+        .module-grid { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
 
         .module-card {
             width: 320px; height: 380px;
@@ -196,18 +196,30 @@
     <div id="dashboard-view" class="view-section active">
         <div class="dash-title">R6 COACH PRO</div>
         <div class="module-grid">
+            
             <div class="module-card" onclick="goToView('trainer-view')">
                 <svg class="icon-lg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4zm4 2c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
                 <h2>PEEK TRAINER</h2>
                 <p>Mechanics, rhythm, and pre-fire timing. Master the A-D-E-Q sequence.</p>
                 <div class="module-btn">ENTER SIMULATION</div>
             </div>
+            
             <div class="module-card" onclick="goToView('strat-view')">
                 <svg class="icon-lg" viewBox="0 0 24 24"><path d="M20.5 3l-6 2-6-2-5.5 1.83v15.34l6 2 6-2 5.5 1.83v-15.34l-5.5-1.83zm-6 15.34l-6 2v-12.68l6-2v12.68zm6-2v-12.68l-6 2v12.68l6-2z"/></svg>
                 <h2>STRAT BOARD</h2>
                 <p>Connect to R6Calls.com for full map blueprints and callouts.</p>
                 <div class="module-btn">OPEN MAPS</div>
             </div>
+
+            <div class="module-card" onclick="window.location.href='pixel-peek.html'">
+                <svg class="icon-lg" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                <h2>PIXEL PEEK</h2>
+                <p>Reaction time training. Click exactly when the target appears.</p>
+                <div class="module-btn">START TEST</div>
+            </div>
+
         </div>
     </div>
 
@@ -448,6 +460,15 @@
             resetRound();
         }
 
+        function resetStats() {
+            streak = 0; sRanks = 0; attempts = 0;
+            document.getElementById('streak-disp').innerText = 0;
+            document.getElementById('acc-disp').innerText = "0%";
+            document.getElementById('daily-text').innerText = "0 / 50";
+            document.getElementById('daily-fill').style.width = "0%";
+            updateStats(0, 'FAIL');
+        }
+
         // ==========================================
         // AUDIO ENGINE
         // ==========================================
@@ -515,7 +536,6 @@
             document.getElementById(id).classList.add('active');
         }
 
-        <a href="pixel-peek.html">Open Reaction Trainer</a>
         // Init
         randomizeTarget();
     </script>
